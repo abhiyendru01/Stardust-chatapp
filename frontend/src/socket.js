@@ -1,18 +1,23 @@
 import { io } from "socket.io-client";
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
+const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";  
 const socket = io(backendUrl, {
   withCredentials: true,
-  secure: true,
+  transports: ["websocket", "polling"],  
+  secure: backendUrl.startsWith("https"),  
 });
 
-// Log connection status
+
 socket.on("connect", () => {
-  console.log("Connected to Socket.IO server");
+  console.log(`✅ Connected to Socket.IO server at ${backendUrl}`);
 });
 
 socket.on("disconnect", () => {
-  console.log("Disconnected from Socket.IO server");
+  console.log("🔴 Disconnected from Socket.IO server");
+});
+
+socket.on("connect_error", (error) => {
+  console.error("⚠️ Socket connection error:", error.message);
 });
 
 export default socket;

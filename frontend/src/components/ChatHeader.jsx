@@ -1,94 +1,161 @@
-import { useState, useEffect } from "react";
-import { Phone } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Phone, ArrowLeft } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import { io } from "socket.io-client";
 import CallUI from "./CallUI";
 
-const socket = io("http://localhost:5000");
+const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001');
 
 const ChatHeader = () => {
   const { selectedUser, setSelectedUser } = useChatStore();
   const { authUser, onlineUsers } = useAuthStore();
   const [inCall, setInCall] = useState(false);
   const [callStatus, setCallStatus] = useState("");
-  const [caller, setCaller] = useState(null);
-  const [isReceivingCall, setIsReceivingCall] = useState(false);
+  const [incomingCall, setIncomingCall] = useState(null);
 
-  useEffect(() => {
-    // Listen for incoming call
-    socket.on("incomingCall", ({ senderId, senderInfo }) => {
-      console.log("📲 Incoming call from:", senderId);
-      setCaller(senderInfo);
-      setCallStatus("Ringing...");
-      setIsReceivingCall(true);
+  const ringingRef = useRef(null); // 🔊 Outgoing call ringtone
+  const incomingRingtoneRef = useRef(null); // 🔊 Incoming call ringtone
+
+  /** ✅ HANDLE CALL INITIATION */
+  const handleCall = () => {
+    if (selectedUser && selectedUser._id) {
+      console.log("📞 Calling:", selectedUser._id);
+      socket.emit("call", {
+        receiverId: selectedUser._id,
+        callerId: authUser._id,
+        callerName: authUser.fullName,
+        callerProfile: authUser.profilePic,
+      });
+
+      setInCall(true);
+      setCallStatus("Calling...");
+      ringingRef.current.play(); // 🔊 Play ringing sound for caller
+    }
+  };
+
+  /** ✅ HANDLE ENDING CALL */
+  const handleEndCall = () => {
+    setInCall(false);
+    setIncomingCall(null);
+    setCallStatus("");
+
+    socket.emit("endCall", {
+      callerId: authUser._id,
+      receiverId: selectedUser?._id || incomingCall?.callerId,
     });
 
-    // Listen for call accepted event
-    socket.on("callAccepted", () => {
+    // 🔇 Stop all sounds
+    ringingRef.current.pause();
+    ringingRef.current.currentTime = 0;
+    incomingRingtoneRef.current.pause();
+    incomingRingtoneRef.current.currentTime = 0;
+  };
+
+  /** ✅ HANDLE CALL ACCEPTANCE */
+  const acceptCall = () => {
+    if (incomingCall) {
+      console.log("✅ Call accepted:", incomingCall.callerId);
+      socket.emit("callAccepted", { callerId: incomingCall.callerId });
       setCallStatus("In Call...");
+      setInCall(true);
+      incomingRingtoneRef.current.pause(); // 🔇 Stop ringtone
+      setIncomingCall(null);
+    }
+  };
+
+  /** ✅ HANDLE CALL REJECTION */
+  const declineCall = () => {
+    if (incomingCall) {
+      console.log("❌ Call rejected:", incomingCall.callerId);
+      socket.emit("callRejected", { callerId: incomingCall.callerId });
+      setIncomingCall(null);
+      setCallStatus("");
+      incomingRingtoneRef.current.pause(); // 🔇 Stop ringtone
+      incomingRingtoneRef.current.currentTime = 0;
+    }
+  };
+
+  /** ✅ LISTEN FOR SOCKET EVENTS */
+  useEffect(() => {
+    socket.on("incomingCall", (data) => {
+      console.log("📞 Incoming call:", data); // Debugging
+
+      setIncomingCall(data);
+      setCallStatus("Incoming Call...");
+      incomingRingtoneRef.current.play(); // 🔊 Play ringtone for receiver
     });
 
-    // Listen for call rejection
+    socket.on("callAccepted", () => {
+      console.log("✅ Call Accepted!");
+      setCallStatus("In Call...");
+      ringingRef.current.pause();
+    });
+
     socket.on("callRejected", () => {
-      setCallStatus("Call Rejected");
-      setTimeout(() => setInCall(false), 2000);
+      console.log("❌ Call Rejected!");
+      setInCall(false);
+      setIncomingCall(null);
+      setCallStatus("");
+      ringingRef.current.pause();
+    });
+
+    socket.on("callEnded", () => {
+      console.log("🔴 Call Ended!");
+      setInCall(false);
+      setIncomingCall(null);
+      setCallStatus("");
+      ringingRef.current.pause();
+      incomingRingtoneRef.current.pause();
     });
 
     return () => {
       socket.off("incomingCall");
       socket.off("callAccepted");
       socket.off("callRejected");
+      socket.off("callEnded");
     };
   }, []);
 
-  const handleCall = () => {
-    if (selectedUser && selectedUser._id) {
-      console.log("📞 Calling:", selectedUser._id);
-      socket.emit("call", {
-        senderId: authUser._id,
-        receiverId: selectedUser._id,
-        senderInfo: authUser,
-      });
-      setCaller(selectedUser);
-      setCallStatus("Calling...");
-      setInCall(true);
-    }
-  };
-
-  const handleEndCall = () => {
-    setInCall(false);
-    setCaller(null);
-    socket.emit("endCall", { receiverId: selectedUser._id });
-  };
-
   return (
     <>
+      {/* ✅ CALL UI FOR BOTH CALLER & RECEIVER */}
       {inCall && (
         <CallUI
-          caller={caller}
+          caller={selectedUser || incomingCall}
           callStatus={callStatus}
-          isIncoming={isReceivingCall}
-          onAcceptCall={() => {
-            setCallStatus("In Call...");
-            setIsReceivingCall(false);
-            socket.emit("acceptCall", { senderId: caller._id, receiverId: authUser._id });
-          }}
+          isIncoming={!selectedUser}
+          onAcceptCall={acceptCall}
           onEndCall={handleEndCall}
         />
       )}
 
+      {incomingCall && !inCall && (
+        <CallUI
+          caller={incomingCall}
+          callStatus={callStatus}
+          isIncoming={true}
+          onAcceptCall={acceptCall}
+          onEndCall={declineCall}
+        />
+      )}
+
+      {/* 🔊 AUDIO ELEMENTS FOR RINGTONES */}
+      <audio ref={ringingRef} src="./audio/ringing.mp3" preload="auto" loop />
+      <audio ref={incomingRingtoneRef} src="./audio/incoming_call.mp3" preload="auto" loop />
+
+      {/* ✅ CHAT HEADER UI */}
       <div className="p-3.5 border-b bg-base-200 border-base-300 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <button onClick={() => setSelectedUser(null)} className="p-2 rounded-3xl hover:bg-base-300">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/70" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 111.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
+            <ArrowLeft className="h-5 w-5 text-base-content" />
           </button>
 
           <div className="flex flex-col items-center">
-            <h3 className="font-bold">{selectedUser.fullName}</h3>
-            <p className="text-sm text-base-content/70">{onlineUsers.includes(selectedUser._id) ? "Online" : "Offline"}</p>
+            <h3 className="font-bold">{selectedUser?.fullName}</h3>
+            <p className="text-sm text-base-content/70">
+              {onlineUsers.includes(selectedUser?._id) ? "Online" : "Offline"}
+            </p>
           </div>
 
           <button onClick={handleCall} className="rounded-lg px-4 py-3 bg-base-300/55 hover:bg-base-300 text-base-content">

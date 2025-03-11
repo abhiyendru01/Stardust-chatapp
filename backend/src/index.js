@@ -8,7 +8,7 @@ import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import friendRoutes from "./routes/friend.route.js";
-import { app, server } from "./lib/socket.js";  // Ensure socket is imported here
+import { app, server } from "./lib/socket.js";  
 import pushNotificationsRoutes from './routes/pushNotifications.route.js';
 
 dotenv.config();
@@ -21,14 +21,15 @@ const allowedOrigins = [
   "https://chatapp003.vercel.app",
   "https://fullstack-chat-4vla6v6q8-abhiyendru01s-projects.vercel.app",
   "http://localhost:5001",
+  "http://localhost:5000",  
+  "ws://localhost:5000",   
 ];
 
-// Middleware setup with increased body size limits
-app.use(express.json({ limit: '50mb' }));  // Set limit for JSON data
-app.use(express.urlencoded({ limit: '50mb', extended: true }));  // Set limit for URL-encoded data
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
-// CORS setup to allow requests from allowed origins
+
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -45,7 +46,6 @@ app.use(
   })
 );
 
-// Helmet security middleware
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -60,7 +60,14 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:"],
-        connectSrc: ["'self'", "http://localhost:5173", "https://chatapp003.vercel.app"],
+        connectSrc: [
+          "'self'",
+          "http://localhost:5173",
+          "https://chatapp003.vercel.app",
+          "http://localhost:5000",
+          "ws://localhost:5000", 
+          "wss://chatapp003.vercel.app"
+        ],
         objectSrc: ["'none'"],
         frameSrc: ["'none'"],
       },
@@ -68,13 +75,12 @@ app.use(
   })
 );
 
-// Routes
+
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/friends", friendRoutes);
-app.use('/api/push', pushNotificationsRoutes);
+app.use("/api/push", pushNotificationsRoutes);
 
-// Serve frontend in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
   app.get("*", (req, res) => {
@@ -82,20 +88,7 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('SW registered:', registration);
-      })
-      .catch(error => {
-        console.log('SW registration failed:', error);
-      });
-  });
-}
-
-// Start server
 server.listen(PORT, () => {
-  console.log(`Server is running on PORT: ${PORT}`);
+  console.log(`🚀 Server is running on PORT: ${PORT}`);
   connectDB();
 });

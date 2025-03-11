@@ -143,7 +143,7 @@ const Sidebar = () => {
          </div>
        
          {/* ✅ Last message time & unread count */}
-         <div className="text-sm text-gray-500">
+         <div className="text-xs text-gray-400 ">
            {user.lastMessageTime ? formatTime(user.lastMessageTime) : ""}
            {user.unreadCount > 0 && (
              <span className="ml-2 text-xs text-red-500 font-bold">({user.unreadCount})</span>

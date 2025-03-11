@@ -18,6 +18,8 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
     credentials: true,
   },
+  transports: ["websocket", "polling"], 
+  allowEIO3: true,
 });
 
 let userSocketMap = {}; // Store userId to socketId mapping
@@ -78,7 +80,25 @@ io.on("connection", (socket) => {
     const callerSocketId = getReceiverSocketId(callerId);
     if (callerSocketId) io.to(callerSocketId).emit("callRejected");
   });
-
+  socket.on("call", async ({ receiverId, callerId, callerName, callerProfile }) => {
+    const receiverSocketId = userSocketMap[receiverId];
+  
+    if (receiverSocketId) {
+      console.log(`📞 Sending call from ${callerId} to ${receiverId}`);
+      io.to(receiverSocketId).emit("incomingCall", { callerId, callerName, callerProfile });
+    } else {
+      console.warn(`❌ User ${receiverId} is not online.`);
+  
+      // ✅ Send Push Notification as a fallback
+      const receiverFCMToken = await getReceiverFCMToken(receiverId);
+      if (receiverFCMToken) {
+        await sendPushNotification(receiverFCMToken, `${callerName} is calling you!`);
+      } else {
+        console.warn(`🚨 No FCM token available for User ${receiverId}.`);
+      }
+    }
+  });
+  
   // ⌨️ Handle Typing Events
   socket.on("typing", (receiverId) => {
     const receiverSocketId = getReceiverSocketId(receiverId);

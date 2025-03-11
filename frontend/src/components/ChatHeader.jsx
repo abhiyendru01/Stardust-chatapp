@@ -79,15 +79,15 @@ const ChatHeader = () => {
   /** ✅ LISTEN FOR SOCKET EVENTS */
   useEffect(() => {
     socket.on("incomingCall", (data) => {
-      console.log("📞 Incoming call:", data); // Debugging
-
+      console.log("📞 Incoming call received:", data);
+      
       setIncomingCall(data);
       setCallStatus("Incoming Call...");
-      incomingRingtoneRef.current.play(); // 🔊 Play ringtone for receiver
+      incomingRingtoneRef.current.play();
     });
 
     socket.on("callAccepted", () => {
-      console.log("✅ Call Accepted!");
+      console.log("✅ Call accepted!");
       setCallStatus("In Call...");
       ringingRef.current.pause();
     });

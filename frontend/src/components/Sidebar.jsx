@@ -2,41 +2,70 @@ import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
-import Navbar from "./Navbar"; // ✅ Import Navbar
+import Navbar from "./Navbar"; 
 
 const Sidebar = () => {
   const { getUsers, users, selectedUser, setSelectedUser } = useChatStore();
   const { onlineUsers } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(""); // State to store search query
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    getUsers();
-  }, [getUsers]);
+    getUsers(); 
+  }, []);
 
-  // Sort and filter users based on last interaction and search query
+  useEffect(() => {
+    const interval = setInterval(() => {
+      getUsers();
+    }, 5000); 
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // ✅ Format time (like WhatsApp)
+  const formatTime = (timestamp) => {
+    if (!timestamp) return "";
+    const date = new Date(timestamp);
+    const now = new Date();
+    
+    // Show "Today" if the message is from today
+    if (date.toDateString() === now.toDateString()) {
+      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    } 
+    // Show "Yesterday" if the message is from yesterday
+    else if (new Date(now.setDate(now.getDate() - 1)).toDateString() === date.toDateString()) {
+      return "Yesterday";
+    } 
+    // Show the date if the message is older
+    else {
+      return date.toLocaleDateString([], { month: "short", day: "numeric" });
+    }
+  };
+
+  // ✅ Sort and filter users based on last message time
   const sortedAndFilteredUsers = users
+    .map((user) => ({
+      ...user,
+      lastMessagedAt: user.lastMessagedAt || null,
+    }))
     .sort((a, b) => {
       const timeA = a.lastMessagedAt ? new Date(a.lastMessagedAt).getTime() : 0;
       const timeB = b.lastMessagedAt ? new Date(b.lastMessagedAt).getTime() : 0;
-      return timeB - timeA; // Sort descending by last interaction
+      return timeB - timeA;
     })
     .filter((user) => {
-      const matchesOnlineStatus =
-        !showOnlineOnly || onlineUsers.includes(user._id);
-      const matchesSearchQuery = user.fullName
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const matchesOnlineStatus = !showOnlineOnly || onlineUsers.includes(user._id);
+      const matchesSearchQuery = user.fullName.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesOnlineStatus && matchesSearchQuery;
     });
 
   return (
     <aside className="h-full w-full lg:w-72 border-r border-base-300 bg-base-100 flex flex-col">
-      {/* ✅ Navbar is added here but only visible on desktop */}
       <div className="hidden lg:block">
         <Navbar />
       </div>
 
+      {/* Search Bar */}
       <div className="border-b-2 rounded-b-3xl border-primary/40 w-full p-5 bg-primary/20 backdrop-blur">
         <div className="flex items-center gap-2">
           <Users className="size-6" />
@@ -83,45 +112,48 @@ const Sidebar = () => {
 
       {/* Users List */}
       <div className="overflow-y-auto w-full py-3 px-3 flex-grow space-y-1">
-        {/* Display filtered users */}
         {sortedAndFilteredUsers.map((user) => (
-          <button
-            key={user._id}
-            onClick={() => setSelectedUser(user)}
-            className={`w-full p-6  lg:p-3 flex items-center gap-3 bg-primary/10 hover:bg-primary/10  hover:border-primary/40 backdrop-blur-sm rounded-3xl border-2 border-spacing-0.5 border-primary/25  transition-colors ${
-              selectedUser?._id === user._id
-                ? "bg-primary/10 ring-1 ring-base-300"
-                : ""
-            }`}
-          >
-            <div className="relative mx-auto lg:mx-0">
-              <img
-                src={user.profilePic || "/avatar.png"}
-                alt={user.name}
-                className="size-12 object-cover rounded-full"
-              />
-              {onlineUsers.includes(user._id) && (
-                <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-zinc-900" />
-              )}
-            </div>
-
-            <div className="hidden lg:block text-left truncate">
-              <div className="font-2xl font-semibold">{user.fullName}</div>
-              <div className="text-base text-zinc-400 md:visible">
-                {onlineUsers.includes(user._id) ? "Online" : "Offline"}
-              </div>
-            </div>
-
-            <div className="lg:hidden flex-grow text-left truncate">
-              <div className="font-semibold">{user.fullName}</div>
-            </div>
-          </button>
+         <button
+         key={user._id}
+         onClick={() => setSelectedUser(user)}
+         className={`w-full p-6 flex items-center gap-3 bg-primary/10 border-primary/10 hover:bg-primary/10 hover:border-primary/40 backdrop-blur-sm rounded-3xl border-2 transition-colors ${
+           selectedUser?._id === user._id ? "bg-primary/10 ring-1 ring-base-300" : ""
+         }`}
+       >
+         {/* ✅ Profile Picture & Online Status */}
+         <div className="relative mx-auto lg:mx-0">
+           <img
+             src={user.profilePic || "/avatar.png"}
+             alt={user.fullName}
+             className="size-12 object-cover rounded-full"
+           />
+           {onlineUsers.includes(user._id) && (
+             <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-zinc-900" />
+           )}
+         </div>
+       
+         {/* ✅ Replace this section with the updated bold unread messages code */}
+         <div className="flex-grow text-left truncate">
+           <div className={`font-semibold ${user.unreadCount > 0 ? "font-bold" : ""}`}>
+             {user.fullName}
+           </div>
+           <div className={`text-sm text-zinc-400 ${user.unreadCount > 0 ? "font-bold" : ""}`}>
+             {user.lastMessage || "No messages yet"}
+           </div>
+         </div>
+       
+         {/* ✅ Last message time & unread count */}
+         <div className="text-sm text-gray-500">
+           {user.lastMessageTime ? formatTime(user.lastMessageTime) : ""}
+           {user.unreadCount > 0 && (
+             <span className="ml-2 text-xs text-red-500 font-bold">({user.unreadCount})</span>
+           )}
+         </div>
+       </button>
+       
         ))}
 
-        {/* No users found message */}
-        {sortedAndFilteredUsers.length === 0 && (
-          <div className="text-center text-zinc-500 py-4">No users found</div>
-        )}
+        {sortedAndFilteredUsers.length === 0 && <div className="text-center text-zinc-500 py-4">No users found</div>}
       </div>
     </aside>
   );

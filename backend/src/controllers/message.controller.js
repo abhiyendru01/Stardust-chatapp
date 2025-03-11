@@ -10,15 +10,42 @@ export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
 
-    // Fetch users excluding the logged-in user
-    const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
+    // ✅ Fetch users excluding the logged-in user
+    let users = await User.find({ _id: { $ne: loggedInUserId } })
+      .select("fullName email profilePic lastMessagedAt")
+      .sort({ lastMessagedAt: -1 })
+      .lean();
 
-    res.status(200).json(filteredUsers);  // Return filtered users
+    // ✅ Fetch the latest message & unread count for each user
+    for (let user of users) {
+      const lastMessage = await Message.findOne({
+        $or: [
+          { senderId: loggedInUserId, receiverId: user._id },
+          { senderId: user._id, receiverId: loggedInUserId },
+        ],
+      })
+        .sort({ timestamp: -1 })
+        .select("text timestamp senderId isRead");
+
+      // ✅ Count unread messages from this user
+      const unreadCount = await Message.countDocuments({
+        senderId: user._id,
+        receiverId: loggedInUserId,
+        isRead: false,
+      });
+
+      user.lastMessage = lastMessage ? lastMessage.text : "";
+      user.lastMessageTime = lastMessage ? lastMessage.timestamp : null;
+      user.unreadCount = unreadCount; // ✅ Add unread count to the response
+    }
+
+    res.status(200).json(users);
   } catch (error) {
-    console.error("Error in getUsersForSidebar: ", error.message);
+    console.error("Error in getUsersForSidebar:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 export const uploadAudio = async (req, res) => {
   try {
     console.log("Received request to upload audio");
@@ -56,28 +83,26 @@ export const uploadAudio = async (req, res) => {
 
 export const getMessages = async (req, res) => {
   try {
-    const { id: userToChatId } = req.params; // Receiver userId
-    const myId = req.user?._id; // Sender userId (current logged-in user)
+    const { id: userToChatId } = req.params;
+    const myId = req.user._id;
 
     if (!myId) {
       return res.status(401).json({ error: "Unauthorized. User not found." });
     }
 
-    if (!userToChatId) {
-      return res.status(400).json({ error: "Receiver ID is required." });
-    }
-
-    // Fetch messages between both users
+    // ✅ Fetch messages
     const messages = await Message.find({
       $or: [
         { senderId: myId, receiverId: userToChatId },
         { senderId: userToChatId, receiverId: myId },
       ],
-    })
-      .sort({ createdAt: 1 }) // Sort in ascending order
-      .lean(); // Convert documents to plain JavaScript objects
+    }).sort({ timestamp: 1 });
 
-    console.log("Fetched Messages:", messages); // Debugging log
+    // ✅ Mark messages as read
+    await Message.updateMany(
+      { senderId: userToChatId, receiverId: myId, isRead: false },
+      { $set: { isRead: true } }
+    );
 
     res.status(200).json(messages);
   } catch (error) {
@@ -85,7 +110,6 @@ export const getMessages = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 export const sendMessage = async (req, res) => {
   try {
@@ -99,31 +123,32 @@ export const sendMessage = async (req, res) => {
       imageUrl = uploadResponse.secure_url;
     }
 
+    // ✅ Save message with `isRead: false`
     const newMessage = new Message({
       senderId,
       receiverId,
       text,
       image: imageUrl,
-      audio, // Include the audio URL in the message
+      audio,
+      timestamp: new Date(),
+      isRead: false, // ✅ New messages are initially unread
     });
 
     await newMessage.save();
 
-    // Emit the new message to the receiver
+    // ✅ Update lastMessagedAt for both users
+    await User.findByIdAndUpdate(senderId, { lastMessagedAt: new Date() }, { new: true });
+    await User.findByIdAndUpdate(receiverId, { lastMessagedAt: new Date() }, { new: true });
+
+    // ✅ Emit the new message to the receiver
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
     }
 
-    // Emit the new message to the sender
-    const senderSocketId = getReceiverSocketId(senderId);
-    if (senderSocketId) {
-      io.to(senderSocketId).emit("newMessage", newMessage);
-    }
-
     res.status(201).json(newMessage);
   } catch (error) {
-    console.log("Error in sendMessage controller: ", error.message);
+    console.log("Error in sendMessage controller:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

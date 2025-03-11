@@ -14,13 +14,21 @@ const messageSchema = new mongoose.Schema(
     },
     text: {
       type: String,
-      trim: true, 
+      trim: true,
     },
     image: {
       type: String,
     },
     audio: {
-      type: String, 
+      type: String,
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    },
+    isRead: { // ✅ New field to track unread messages
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

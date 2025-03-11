@@ -17,22 +17,32 @@ export const useChatStore = create((set, get) => ({
   isContact: (userId) => get().contacts.includes(userId),
 
   
-
   getUsers: async () => {
     set({ isUsersLoading: true });
     try {
       const res = await axiosInstance.get("/messages/users");
-      const usersWithTimestamp = res.data.map((user) => ({
+      let usersWithTimestamp = res.data.map((user) => ({
         ...user,
         lastMessagedAt: user.lastMessagedAt || null,
+        lastMessage: user.lastMessage || "", // ✅ Include last message
+        lastMessageTime: user.lastMessageTime || null, // ✅ Include last message time
       }));
+  
+      // ✅ Sort users by `lastMessagedAt`
+      usersWithTimestamp.sort((a, b) => {
+        const timeA = a.lastMessagedAt ? new Date(a.lastMessagedAt).getTime() : 0;
+        const timeB = b.lastMessagedAt ? new Date(b.lastMessagedAt).getTime() : 0;
+        return timeB - timeA;
+      });
+  
       set({ users: usersWithTimestamp });
     } catch (error) {
-      toast.error(error.response.data.message);
+      console.error("Error fetching users:", error);
     } finally {
       set({ isUsersLoading: false });
     }
-  },
+  }
+,  
 
   getMessages: async (userId) => {
     set({ isMessagesLoading: true });
@@ -53,42 +63,63 @@ export const useChatStore = create((set, get) => ({
     }
 },
 
-
 sendMessage: async (messageData) => {
   const { selectedUser, messages, users } = get();
   try {
-      console.log("Sending Message Data:", messageData); // Debugging
-      
-      const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
-      console.log("Message Sent Response:", res.data); // Debugging
+    console.log("Sending Message Data:", messageData); 
 
-      set({ messages: [...messages, res.data] });
+    const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
+    console.log("Message Sent Response:", res.data); 
 
-      const updatedUsers = users.map((user) =>
-          user._id === selectedUser._id ? { ...user, lastMessagedAt: new Date().toISOString() } : user
-      );
-      set({ users: updatedUsers });
+    set({ messages: [...messages, res.data] });
+
+    let updatedUsers = users.map((user) =>
+      user._id === selectedUser._id
+        ? { ...user, lastMessagedAt: new Date().toISOString() }
+        : user
+    );
+
+    // ✅ Sort users after updating lastMessagedAt
+    updatedUsers.sort((a, b) => {
+      const timeA = a.lastMessagedAt ? new Date(a.lastMessagedAt).getTime() : 0;
+      const timeB = b.lastMessagedAt ? new Date(b.lastMessagedAt).getTime() : 0;
+      return timeB - timeA;
+    });
+
+    set({ users: updatedUsers });
   } catch (error) {
-      toast.error(error.response.data.message);
+    toast.error(error.response?.data?.message || "Error sending message");
   }
 },
 
 
+
 subscribeToMessages: () => {
-  const { selectedUser } = get();
   const socket = useAuthStore.getState().socket;
-  if (!selectedUser || !socket) return;
+  if (!socket) return;
 
   socket.on("newMessage", (newMessage) => {
-      console.log("New message received:", newMessage);  // ✅ Debugging
-      if (newMessage.audio) {
-          console.log("Audio message received:", newMessage.audio);
-      }
-      if (newMessage.senderId === selectedUser._id || newMessage.receiverId === selectedUser._id) {
-          set((state) => ({ messages: [...state.messages, newMessage] }));
-      }
+    console.log("New message received:", newMessage);
+
+    set((state) => {
+      let updatedUsers = state.users.map((user) =>
+        user._id === newMessage.senderId || user._id === newMessage.receiverId
+          ? { ...user, lastMessagedAt: new Date().toISOString() }
+          : user
+      );
+
+      // ✅ Sort users after updating lastMessagedAt
+      updatedUsers.sort((a, b) => {
+        const timeA = a.lastMessagedAt ? new Date(a.lastMessagedAt).getTime() : 0;
+        const timeB = b.lastMessagedAt ? new Date(b.lastMessagedAt).getTime() : 0;
+        return timeB - timeA;
+      });
+
+      return { messages: [...state.messages, newMessage], users: updatedUsers };
+    });
   });
-},
+}
+  ,
 
   getFriends: async () => {
     try {

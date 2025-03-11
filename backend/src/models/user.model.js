@@ -27,7 +27,11 @@ const userSchema = new mongoose.Schema(
     friendRequests: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-    }]
+    }],
+    lastMessagedAt: { // ✅ Added this field
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

@@ -74,7 +74,7 @@ const updateManifestTheme = (theme) => {
 
 // ✅ Ensure this function is AFTER `updateManifestTheme`
 export const useThemeStore = create((set) => ({
-  theme: localStorage.getItem("chat-theme") || "nord",
+  theme: localStorage.getItem("chat-theme") || "wireframe",
   setTheme: (theme) => {
     localStorage.setItem("chat-theme", theme);
     updateManifestTheme(theme); // 🔥 No more red line

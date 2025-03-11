@@ -61,20 +61,37 @@ io.on("connection", (socket) => {
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   }
 
-  socket.on("disconnect", () => {
-    if (userId) {
-      console.log(`User ${userId} disconnected.`);
-      delete userSocketMap[userId];
-      io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  // Handle outgoing call
+  socket.on("call", ({ senderId, receiverId, senderInfo }) => {
+    console.log(`📞 ${senderId} is calling ${receiverId}`);
+
+    const receiverSocketId = userSocketMap[receiverId];
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("incomingCall", { senderId, senderInfo });
+      console.log(`📲 Ringing on ${receiverId}'s device`);
     }
   });
-});
-// When a new user connects
-io.on("connection", (socket) => {
-  console.log(`User connected: ${socket.id}`);
 
-  // Retrieve the userId from the query string during socket connection
-  const userId = socket.handshake.query.userId;
+  // Handle call accepted
+  socket.on("acceptCall", ({ senderId, receiverId }) => {
+    console.log(`✅ Call accepted by ${receiverId}`);
+    const senderSocketId = userSocketMap[senderId];
+
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("callAccepted", { receiverId });
+    }
+  });
+
+  // Handle call rejection
+  socket.on("rejectCall", ({ senderId, receiverId }) => {
+    console.log(`❌ Call rejected by ${receiverId}`);
+    const senderSocketId = userSocketMap[senderId];
+
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("callRejected");
+    }
+  });
 
   if (userId) {
     userSocketMap[userId] = socket.id; // Store userId with socket id

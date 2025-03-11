@@ -20,9 +20,8 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://chatapp003.vercel.app",
   "https://fullstack-chat-4vla6v6q8-abhiyendru01s-projects.vercel.app",
-  "http://localhost:5001",
-  "http://localhost:5000",  
-  "ws://localhost:5000",   
+  "http://localhost:5001",  
+  "ws://localhost:5001",   
 ];
 
 app.use(express.json({ limit: '50mb' }));

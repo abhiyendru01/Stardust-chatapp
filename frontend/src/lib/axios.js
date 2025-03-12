@@ -12,6 +12,8 @@ export const axiosInstance = axios.create({
   },
 });
 
+
+
 // Add an interceptor to automatically add the token to headers
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem("authToken");

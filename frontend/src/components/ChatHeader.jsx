@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Phone, ArrowLeft } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
+import { saveCallLog } from "../services/callService";
 import { io } from "socket.io-client";
 import CallUI from "./CallUI";
 
@@ -44,7 +45,15 @@ const ChatHeader = () => {
       callerId: authUser._id,
       receiverId: selectedUser?._id || incomingCall?.callerId,
     });
-
+    const callData = {
+      caller: authUser._id,
+      receiver: selectedUser?._id || incomingCall?.callerId,
+      callType: "audio", // Change based on call type
+      status: "completed", // Change as needed
+      duration: 120, // Replace with actual duration
+    };
+  
+    saveCallLog(callData);
     // 🔇 Stop all sounds
     ringingRef.current.pause();
     ringingRef.current.currentTime = 0;

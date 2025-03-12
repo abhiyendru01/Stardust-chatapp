@@ -22,7 +22,7 @@ const Sidebar = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ Format time (like WhatsApp)
+  
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
     const date = new Date(timestamp);
@@ -66,9 +66,10 @@ const Sidebar = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="border-b-2 rounded-b-3xl border-primary/40 w-full p-5 bg-primary/20 backdrop-blur">
+      <div className="border-b-2 rounded-b-3xl border-primary/40 w-full p-5 h-40 bg-primary/20 backdrop-blur">
         <div className="flex items-center gap-2">
-          <Users className="size-6" />
+        <h1 className="mt-6 text-2xl font-bold text-base-content">Chats</h1>
+        <Users className="mt-6 text-base-content justify-end" />
           <span className="font-medium hidden lg:block">Contacts</span>
         </div>
         <div className="mt-3 hidden lg:flex items-center gap-2">

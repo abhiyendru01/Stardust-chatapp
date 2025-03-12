@@ -7,7 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
 import CallUI from "./components/CallUI";
-
+import RecentCalls from "./pages/RecentCalls";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
@@ -112,6 +112,7 @@ const App = () => {
               </motion.div>
             }
           />
+          <Route path="/calls" element={<RecentCalls />} />
           <Route
             path="/profile"
             element={

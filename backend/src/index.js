@@ -8,6 +8,7 @@ import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import friendRoutes from "./routes/friend.route.js";
+import callRoutes from "./routes/call.route.js";
 import { app, server } from "./lib/socket.js";  
 import pushNotificationsRoutes from './routes/pushNotifications.route.js';
 
@@ -80,6 +81,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/push", pushNotificationsRoutes);
+app.use("/api/calls", callRoutes);
+
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));

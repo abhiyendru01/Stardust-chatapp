@@ -1,17 +1,23 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
+import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
 import { useChatStore } from "../store/useChatStore";
 import Footer from "../components/Footer";
-import { Camera, Mail, User } from "lucide-react";
+import { Camera, Mail, User, LogOut } from "lucide-react";
 
 const ProfilePage = () => {
-  const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
+  const { authUser, isUpdatingProfile, updateProfile, logout } = useAuthStore();
   const [selectedImg, setSelectedImg] = useState(null);
   const [name, setName] = useState(authUser?.fullName || "");
   const [isSaving, setIsSaving] = useState(false);
   const { selectedUser } = useChatStore();
+  const navigate = useNavigate();
 
+  const handleLogout = () => {
+    logout();
+    navigate("/login"); 
+  };
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -74,7 +80,18 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="h-screen pt-20 bg-base-100">
+    
+    <div className="h-screen pt-10 bg-base-100">
+       <div className=" flex justify-end fixed top-0 right-0 p-4">
+  <button
+    title="Logout"
+    className="cursor-pointer flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-base-300 text-primary-content hover:bg-primary active:border active:border-red-400 duration-300"
+    onClick={handleLogout} // Use the new function
+  >
+    <LogOut className="w-5 h-5" />
+    <span className="font-semibold"></span>
+  </button>
+</div>
       <div className="max-w-2xl mx-auto p-6 py-10">
         <div className="bg-primary/20 shadow-lg rounded-xl p-8 space-y-8">
           <div className="text-center">
@@ -159,17 +176,20 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {/* Save button */}
+          {/* Save Button */}
           <div className="mt-6 flex justify-center">
             <button
               title="Save"
-              className="cursor-pointer flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary/30 text-primary-content hover:bg-primary active:border active:border-lime-400 duration-300"
+              className="cursor-pointer flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary/40 text-primary-content  hover:bg-primary/60 active:border active:border-green-400 duration-300"
               onClick={handleSave}
               disabled={isSaving}
             >
-              <span className="font-semibold">Save</span>
+              <span className="font-semibold">{isSaving ? "Saving..." : "Save"}</span>
             </button>
           </div>
+
+          {/* Logout Button */}
+         
         </div>
       </div>
       <div className={`md:hidden fixed bottom-0 left-0 right-0`}>

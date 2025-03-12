@@ -71,13 +71,17 @@ export const useAuthStore = create((set, get) => ({
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
+      localStorage.removeItem("authToken"); // ✅ Clear token
       set({ authUser: null });
+      get().disconnectSocket();  // Disconnect socket
       toast.success("Logged out successfully");
-      get().disconnectSocket();  // Disconnect the socket when logged out
+
+      window.location.href = "/login"; // ✅ Force reload and redirect to login
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Logout failed");
     }
   },
+
 
   // Handle profile update
   updateProfile: async (data) => {

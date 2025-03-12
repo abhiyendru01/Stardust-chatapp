@@ -105,36 +105,38 @@ export const useAuthStore = create((set, get) => ({
 
   // Socket.io connection to handle real-time features
   connectSocket: () => {
-    const { authUser } = get();
-    if (!authUser || get().socket?.connected) return;
-
-    const socket = io(BASE_URL, {
-      query: {
-        userId: authUser._id,
-      },
+    const { authUser, socket } = get();
+    if (!authUser || (socket && socket.connected)) return;
+  
+    console.log("🔌 Connecting to WebSocket...");
+  
+    const newSocket = io(BASE_URL, {
+      withCredentials: true,
+      transports: ["websocket", "polling"],
+      query: { userId: authUser._id },
     });
-    socket.connect();
-
-    set({ socket: socket });
-
-    // Listen for online users
-    socket.on("getOnlineUsers", (userIds) => {
+  
+    newSocket.on("connect", () => {
+      console.log(`✅ Connected to WebSocket as ${authUser._id}`);
+      set({ socket: newSocket });
+    });
+  
+    newSocket.on("disconnect", (reason) => {
+      console.log("🔴 Disconnected from WebSocket:", reason);
+    });
+  
+    newSocket.on("connect_error", (error) => {
+      console.error("⚠️ WebSocket Connection Error:", error);
+    });
+  
+    newSocket.on("getOnlineUsers", (userIds) => {
+      console.log("👥 Online Users:", userIds);
       set({ onlineUsers: userIds });
     });
-
-    // Listen for incoming messages and show notifications
-    socket.on("messageReceived", (data) => {
-      const { senderId, message } = data;
-    
-      // Show a notification or toast for a new message
-      toast.success(`New message from user ${senderId}: ${message}`, {
-        duration: 5000,  // Duration for the toast notification
-      });
-    
-      // Optionally, display other types of notifications (e.g., in-app, UI updates)
-      // You could update the UI here with the new message, etc.
-    });
+  
+    set({ socket: newSocket });
   },
+  
 
   // Disconnect the socket when the user logs out or disconnects
   disconnectSocket: () => {

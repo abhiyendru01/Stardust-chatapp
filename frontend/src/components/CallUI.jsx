@@ -19,14 +19,14 @@ const CallUI = ({
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-base-300 bg-opacity-80 bg-blend-multiply backdrop-blur-md flex flex-col items-center justify-center text-primary-content z-50">
+    <div className="fixed inset-0 bg-base-300 bg-opacity-80 bg-blend-multiply backdrop-blur-md flex flex-col items-center justify-center text-base-content z-50">
       
       {/* User Info */}
       <div className="flex flex-col items-center">
         <img
           src={caller?.profilePic || "/avatar.png"}
           alt={caller?.fullName}
-          className="w-24 h-24 rounded-full border-4 border-primary/10 shadow-lg"
+          className="w-24 h-24 rounded-full border-4 border-primary-content shadow-lg"
         />
         <h2 className="text-2xl font-semibold mt-3">{caller?.fullName}</h2>
         <p className="text-lg text-gray-400 mt-1">{callStatus}</p>

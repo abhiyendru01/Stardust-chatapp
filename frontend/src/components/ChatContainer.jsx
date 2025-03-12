@@ -37,21 +37,26 @@ const ChatContainer = () => {
       setCallStatus("Ringing...");
       setIsInCall(true);
     });
-
+  
     socket.on("callAccepted", () => {
       setCallStatus("In Call");
     });
-
+  
     socket.on("callEnded", () => {
       setIsInCall(false);
       setCaller(null);
       setCallStatus("");
     });
-
+  
+    socket.on("newMessage", (message) => {
+      console.log("📩 Received new message:", message);
+    });
+  
     return () => {
       socket.off("incomingCall");
       socket.off("callAccepted");
       socket.off("callEnded");
+      socket.off("newMessage");
     };
   }, []);
 

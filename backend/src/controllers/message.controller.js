@@ -110,7 +110,6 @@ export const getMessages = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 export const sendMessage = async (req, res) => {
   try {
     const { text, image, audio } = req.body;
@@ -131,7 +130,7 @@ export const sendMessage = async (req, res) => {
       image: imageUrl,
       audio,
       timestamp: new Date(),
-      isRead: false, // ✅ New messages are initially unread
+      isRead: false, 
     });
 
     await newMessage.save();
@@ -140,10 +139,16 @@ export const sendMessage = async (req, res) => {
     await User.findByIdAndUpdate(senderId, { lastMessagedAt: new Date() }, { new: true });
     await User.findByIdAndUpdate(receiverId, { lastMessagedAt: new Date() }, { new: true });
 
-    // ✅ Emit the new message to the receiver
+    // ✅ Emit the new message to BOTH sender & receiver
     const receiverSocketId = getReceiverSocketId(receiverId);
+    const senderSocketId = getReceiverSocketId(senderId);
+
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
+
+    if (senderSocketId) {  // ✅ Ensure sender also sees the message instantly
+      io.to(senderSocketId).emit("newMessage", newMessage);
     }
 
     res.status(201).json(newMessage);

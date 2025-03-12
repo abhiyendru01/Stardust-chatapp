@@ -11,14 +11,14 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: [
-      "http://localhost:5173", // Development frontend
-      "https://chatapp003.vercel.app", // Production frontend
-      "stardust-chatapp-production.up.railway.app",
+      "http://localhost:5173",
+      "https://chatapp003.vercel.app",
+      "https://stardust-chatapp-production.up.railway.app"
     ],
     methods: ["GET", "POST"],
     credentials: true,
   },
-  transports: ["websocket", "polling"], 
+  transports: ["websocket", "polling"],  
   allowEIO3: true,
 });
 
@@ -51,13 +51,13 @@ io.on("connection", (socket) => {
   
   if (!userId) {
     console.error("❌ No userId provided, disconnecting socket.");
-    socket.disconnect(); // Stop processing if userId is missing
+    socket.disconnect();
     return;
   }
 
-  userSocketMap[userId] = socket.id; // Store userId with socket id
+  userSocketMap[userId] = socket.id;
   console.log(`🟢 User ${userId} is online.`);
-  io.emit("getOnlineUsers", Object.keys(userSocketMap)); // Emit updated online users list
+  io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   // 📞 Handle Incoming Calls
   socket.on("call", ({ receiverId, callerId, callerName, callerProfile }) => {
@@ -112,40 +112,25 @@ io.on("connection", (socket) => {
 
   // ✉️ Handle Sending Messages
   socket.on("sendMessage", async ({ receiverId, message }) => {
-    if (!receiverId || !userId) {
-      console.error("❌ sendMessage: Missing senderId or receiverId.");
-      return;
-    }
+    if (!receiverId || !userId) return;
 
     console.log(`📩 Message from ${userId} to ${receiverId}: ${message}`);
 
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
-      console.log(`✅ User ${receiverId} is online, sending message.`);
       io.to(receiverSocketId).emit("newMessage", { senderId: userId, message });
-    } else {
-      console.warn(`⚠️ User ${receiverId} is offline, sending push notification.`);
-
-      // Retrieve receiver's FCM token
-      const receiverFCMToken = await getReceiverFCMToken(receiverId);
-      if (receiverFCMToken) {
-        await sendPushNotification(receiverFCMToken, message);
-      } else {
-        console.warn(`🚨 No FCM token available for User ${receiverId}.`);
-      }
     }
 
-    // Emit the new message back to the sender
     const senderSocketId = getReceiverSocketId(userId);
-    if (senderSocketId) io.to(senderSocketId).emit("newMessage", { senderId: userId, message });
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("newMessage", { senderId: userId, message });
+    }
   });
 
-  // ❌ Handle User Disconnection
   socket.on("disconnect", () => {
     if (userId) {
-      console.log(`🔴 User ${userId} disconnected.`);
-      delete userSocketMap[userId]; // Remove from online users
-      io.emit("getOnlineUsers", Object.keys(userSocketMap)); // Emit updated online users list
+      delete userSocketMap[userId];
+      io.emit("getOnlineUsers", Object.keys(userSocketMap));
     }
   });
 });

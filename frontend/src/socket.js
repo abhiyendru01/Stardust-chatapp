@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
-import { useAuthStore } from "../store/useAuthStore";
+import { useAuthStore } from "./store/useAuthStore";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 

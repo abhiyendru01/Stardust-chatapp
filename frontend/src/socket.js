@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 import { useAuthStore } from "../store/useAuthStore"; // Import auth store
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://stardust-chatapp-production.up.railway.app";
+const backendUrl = import.meta.env.VITE_BACKEND_URL || "localhost:5001";
 
 const authUser = useAuthStore.getState().authUser; // Get the logged-in user
 

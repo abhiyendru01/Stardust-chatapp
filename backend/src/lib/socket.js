@@ -135,13 +135,6 @@ io.on("connection", (socket) => {
     }
 });
 
-
-  socket.on("disconnect", () => {
-    if (userId) {
-      delete userSocketMap[userId];
-      io.emit("getOnlineUsers", Object.keys(userSocketMap));
-    }
-  });
 });
 
 // Export the app, server, and io

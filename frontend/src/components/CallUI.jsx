@@ -19,7 +19,7 @@ const CallUI = ({
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-primary bg-opacity-80 bg-blend-multiply backdrop-blur-md flex flex-col items-center justify-center text-primary-content z-50">
+    <div className="fixed inset-0 bg-base-300 bg-opacity-80 bg-blend-multiply backdrop-blur-md flex flex-col items-center justify-center text-primary-content z-50">
       
       {/* User Info */}
       <div className="flex flex-col items-center">

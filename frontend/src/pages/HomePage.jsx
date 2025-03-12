@@ -21,7 +21,7 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="h-screen w-full bg-base-300 relative">
+    <div className="h-screen w-full bg-base-100 relative">
       {/* ✅ Show Navbar only on desktop */}
       {!isMobile && <Navbar />}
 

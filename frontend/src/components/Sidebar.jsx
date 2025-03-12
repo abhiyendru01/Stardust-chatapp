@@ -138,7 +138,7 @@ const Sidebar = () => {
            <div className={`font-semibold ${user.unreadCount > 0 ? "font-bold" : ""}`}>
              {user.fullName}
            </div>
-           <div className={`text-sm ${user.unreadCount > 0 ? "font-extrabold text-primary-content" : "text-zinc-400"}`}>
+           <div className={`text-sm ${user.unreadCount > 0 ? "font-extrabold text-base-content/90" : "text-zinc-400"}`}>
   {user.lastMessage || "No messages yet"}
 </div>
 
@@ -148,14 +148,14 @@ const Sidebar = () => {
          <div className="text-xs text-gray-400 ">
            {user.lastMessageTime ? formatTime(user.lastMessageTime) : ""}
            {user.unreadCount > 0 && (
-             <span className="ml-2 text-md text-primary-content font-bold">({user.unreadCount})</span>
+             <span className="ml-2 text-md text-base-content font-bold">({user.unreadCount})</span>
            )}
          </div>
        </button>
        
         ))}
 
-        {sortedAndFilteredUsers.length === 0 && <div className="text-center text-zinc-500 bg-base-100 py-4">No users found</div>}
+        {sortedAndFilteredUsers.length === 0 && <div className="text-center text-base-content/70 justify-center bg-base-100 py-4">No users found</div>}
       </div>
     </aside>
   );

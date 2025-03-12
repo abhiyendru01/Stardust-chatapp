@@ -21,10 +21,12 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://chatapp003.vercel.app",
   "https://fullstack-chat-4vla6v6q8-abhiyendru01s-projects.vercel.app",
-  "http://localhost:5001",  
-  "ws://localhost:5001", 
-  "wss://stardust-chatapp-production.up.railway.app",  
+  "http://localhost:5001",
+  "ws://localhost:5001",
+  "https://stardust-chatapp-production.up.railway.app",  
+  "wss://stardust-chatapp-production.up.railway.app", 
 ];
+
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -66,8 +68,8 @@ app.use(
           "http://localhost:5173",
           "https://chatapp003.vercel.app",
           "http://localhost:5001",
-          "ws://localhost:5001", 
-          "wss://chatapp003.vercel.app"
+          "ws://localhost:5001",
+          "wss://stardust-chatapp-production.up.railway.app", 
         ],
         objectSrc: ["'none'"],
         frameSrc: ["'none'"],
@@ -75,6 +77,7 @@ app.use(
     },
   })
 );
+
 
 
 app.use("/api/auth", authRoutes);

@@ -7,7 +7,7 @@ const authUser = useAuthStore.getState().authUser;
 
 const socket = io(backendUrl, {
   withCredentials: true,
-  transports: ["websocket"], // ✅ Enforce WebSocket-only (no polling)
+  transports: ["polling", "websocket"],
   secure: backendUrl.startsWith("https"),
   path: "/socket.io/", 
   query: { userId: authUser?._id }, 

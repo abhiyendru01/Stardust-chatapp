@@ -138,16 +138,17 @@ const Sidebar = () => {
            <div className={`font-semibold ${user.unreadCount > 0 ? "font-bold" : ""}`}>
              {user.fullName}
            </div>
-           <div className={`text-sm text-zinc-400 ${user.unreadCount > 0 ? "font-bold" : ""}`}>
-             {user.lastMessage || "No messages yet"}
-           </div>
+           <div className={`text-sm ${user.unreadCount > 0 ? "font-extrabold text-primary-content" : "text-zinc-400"}`}>
+  {user.lastMessage || "No messages yet"}
+</div>
+
          </div>
        
          {/* ✅ Last message time & unread count */}
          <div className="text-xs text-gray-400 ">
            {user.lastMessageTime ? formatTime(user.lastMessageTime) : ""}
            {user.unreadCount > 0 && (
-             <span className="ml-2 text-xs text-red-500 font-bold">({user.unreadCount})</span>
+             <span className="ml-2 text-md text-primary-content font-bold">({user.unreadCount})</span>
            )}
          </div>
        </button>

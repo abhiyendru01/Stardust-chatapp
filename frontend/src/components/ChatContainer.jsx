@@ -49,7 +49,7 @@ const ChatContainer = () => {
     });
   
     socket.on("newMessage", (message) => {
-      console.log("📩 Received new message:", message);
+      console.log("📩 [FRONTEND] Received new message:", message);
     });
   
     return () => {

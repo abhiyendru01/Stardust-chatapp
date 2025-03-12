@@ -1,23 +1,23 @@
 import { io } from "socket.io-client";
 import { useAuthStore } from "../store/useAuthStore"; // Import auth store
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";  
+const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://stardust-chatapp-production.up.railway.app";
 
 const authUser = useAuthStore.getState().authUser; // Get the logged-in user
 
 const socket = io(backendUrl, {
   withCredentials: true,
-  transports: ["websocket", "polling"],  
-  secure: backendUrl.startsWith("https"),  
-  query: { userId: authUser?._id },  // ✅ Pass userId in connection query
+  transports: ["websocket"], // ✅ Force WebSocket only, no polling
+  secure: true,
+  query: { userId: authUser?._id }, // ✅ Pass userId in connection query
 });
 
 socket.on("connect", () => {
-  console.log(`✅ Connected to Socket.IO server at ${backendUrl}`);
+  console.log(`✅ Connected to WebSocket server at ${backendUrl}`);
 });
 
 socket.on("disconnect", () => {
-  console.log("🔴 Disconnected from Socket.IO server");
+  console.log("🔴 Disconnected from WebSocket server");
 });
 
 socket.on("connect_error", (error) => {

@@ -18,7 +18,7 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
     credentials: true,
   },
-  transports: ["websocket", "polling"],  
+  transports: ["websocket"],  
   allowEIO3: true,
 });
 
@@ -45,15 +45,16 @@ export function getReceiverSocketId(receiverId) {
 }
 
 io.on("connection", (socket) => {
-  console.log(`✅ User connected: ${socket.id}`);
+  console.log(`✅ WebSocket Connected: ${socket.id}`);
 
   const userId = socket.handshake.query.userId;
-  
+
   if (!userId) {
     console.error("❌ No userId provided, disconnecting socket.");
     socket.disconnect();
     return;
   }
+
 
   userSocketMap[userId] = socket.id;
   console.log(`🟢 User ${userId} is online.`);
@@ -112,20 +113,28 @@ io.on("connection", (socket) => {
 
   // ✉️ Handle Sending Messages
   socket.on("sendMessage", async ({ receiverId, message }) => {
-    if (!receiverId || !userId) return;
+    if (!receiverId || !userId) {
+        console.error("❌ sendMessage: Missing senderId or receiverId.");
+        return;
+    }
 
-    console.log(`📩 Message from ${userId} to ${receiverId}: ${message}`);
+    console.log(`📩 [SERVER] Received message from ${userId} to ${receiverId}:`, message);
 
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("newMessage", { senderId: userId, message });
+        console.log(`✅ [SERVER] Sending message to receiver: ${receiverSocketId}`);
+        io.to(receiverSocketId).emit("newMessage", { senderId: userId, message });
+    } else {
+        console.warn(`⚠️ [SERVER] Receiver ${receiverId} is offline.`);
     }
 
     const senderSocketId = getReceiverSocketId(userId);
     if (senderSocketId) {
-      io.to(senderSocketId).emit("newMessage", { senderId: userId, message });
+        console.log(`✅ [SERVER] Sending message back to sender: ${senderSocketId}`);
+        io.to(senderSocketId).emit("newMessage", { senderId: userId, message });
     }
-  });
+});
+
 
   socket.on("disconnect", () => {
     if (userId) {

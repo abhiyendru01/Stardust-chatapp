@@ -13,7 +13,7 @@ const io = new Server(server, {
     origin: [
       "http://localhost:5173", // Development frontend
       "https://chatapp003.vercel.app", // Production frontend
-      "https://fullstack-chat-app-master-j115.onrender.com", // Render backend
+      "stardust-chatapp-production.up.railway.app",
     ],
     methods: ["GET", "POST"],
     credentials: true,

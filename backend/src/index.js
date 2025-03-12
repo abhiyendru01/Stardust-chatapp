@@ -23,7 +23,7 @@ const allowedOrigins = [
   "https://fullstack-chat-4vla6v6q8-abhiyendru01s-projects.vercel.app",
   "http://localhost:5001",  
   "ws://localhost:5001", 
-  "wss://fullstack-chat-app-master-j115.onrender.com",  
+  "wss://stardust-chatapp-production.up.railway.app",  
 ];
 
 app.use(express.json({ limit: '50mb' }));
@@ -65,8 +65,8 @@ app.use(
           "'self'",
           "http://localhost:5173",
           "https://chatapp003.vercel.app",
-          "http://localhost:5000",
-          "ws://localhost:5000", 
+          "http://localhost:5001",
+          "ws://localhost:5001", 
           "wss://chatapp003.vercel.app"
         ],
         objectSrc: ["'none'"],

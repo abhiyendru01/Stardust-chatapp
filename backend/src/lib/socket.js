@@ -18,9 +18,11 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
     credentials: true,
   },
-  transports: ["websocket"],  
+  transports: ["polling", "websocket"],  
   allowEIO3: true,
+  path: "/socket.io/",
 });
+
 
 let userSocketMap = {}; // Store userId to socketId mapping
 

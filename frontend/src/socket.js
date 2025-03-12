@@ -1,15 +1,16 @@
 import { io } from "socket.io-client";
-import { useAuthStore } from "../store/useAuthStore"; // Import auth store
+import { useAuthStore } from "../store/useAuthStore";
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "localhost:5001";
+const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 
-const authUser = useAuthStore.getState().authUser; // Get the logged-in user
+const authUser = useAuthStore.getState().authUser;
 
 const socket = io(backendUrl, {
   withCredentials: true,
-  transports: ["websocket"], // ✅ Force WebSocket only, no polling
-  secure: true,
-  query: { userId: authUser?._id }, // ✅ Pass userId in connection query
+  transports: ["websocket", "polling"],
+  secure: backendUrl.startsWith("https"),
+  path: "/socket.io/", 
+  query: { userId: authUser?._id }, 
 });
 
 socket.on("connect", () => {

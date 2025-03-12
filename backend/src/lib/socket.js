@@ -18,7 +18,7 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
     credentials: true,
   },
-  transports: ["polling", "websocket"],  
+  transports: ["websocket"],  
   allowEIO3: true,
   path: "/socket.io/",
 });
@@ -62,6 +62,11 @@ io.on("connection", (socket) => {
   console.log(`🟢 User ${userId} is online.`);
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
+  socket.on("disconnect", (reason) => {
+    console.log(`🔴 User ${userId} disconnected. Reason: ${reason}`);
+    delete userSocketMap[userId];
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  });
   // 📞 Handle Incoming Calls
   socket.on("call", ({ receiverId, callerId, callerName, callerProfile }) => {
     const receiverSocketId = getReceiverSocketId(receiverId);
@@ -115,25 +120,19 @@ io.on("connection", (socket) => {
 
   // ✉️ Handle Sending Messages
   socket.on("sendMessage", async ({ receiverId, message }) => {
-    if (!receiverId || !userId) {
-        console.error("❌ sendMessage: Missing senderId or receiverId.");
-        return;
-    }
-
     console.log(`📩 [SERVER] Received message from ${userId} to ${receiverId}:`, message);
 
-    const receiverSocketId = getReceiverSocketId(receiverId);
+    const receiverSocketId = userSocketMap[receiverId];
     if (receiverSocketId) {
-        console.log(`✅ [SERVER] Sending message to receiver: ${receiverSocketId}`);
-        io.to(receiverSocketId).emit("newMessage", { senderId: userId, message });
+      io.to(receiverSocketId).emit("newMessage", { senderId: userId, message });
     } else {
-        console.warn(`⚠️ [SERVER] Receiver ${receiverId} is offline.`);
+      console.warn(`⚠️ [SERVER] Receiver ${receiverId} is offline.`);
     }
 
     const senderSocketId = getReceiverSocketId(userId);
     if (senderSocketId) {
         console.log(`✅ [SERVER] Sending message back to sender: ${senderSocketId}`);
-        io.to(senderSocketId).emit("newMessage", { senderId: userId, message });
+        io.to(socket.id).emit("newMessage", { senderId: userId, message });
     }
 });
 

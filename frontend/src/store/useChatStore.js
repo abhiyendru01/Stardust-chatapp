@@ -2,6 +2,7 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
+import { getSocket } from "../lib/socket";
 
 export const useChatStore = create((set, get) => ({
   contacts: [],
@@ -66,10 +67,19 @@ export const useChatStore = create((set, get) => ({
 sendMessage: async (messageData) => {
   const { selectedUser, messages, users } = get();
   try {
-    console.log("Sending Message Data:", messageData); 
+    console.log("Sending Message Data:", messageData);
+
+    const tempMessage = {
+      ...messageData,
+      senderId: useAuthStore.getState().authUser._id,
+      createdAt: new Date().toISOString(),
+    };
+
+    // ✅ Add message to the state before API call
+    set({ messages: [...messages, tempMessage] });
 
     const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
-    console.log("Message Sent Response:", res.data); 
+    console.log("Message Sent Response:", res.data);
 
     set({ messages: [...messages, res.data] });
 
@@ -79,7 +89,6 @@ sendMessage: async (messageData) => {
         : user
     );
 
-    // ✅ Sort users after updating lastMessagedAt
     updatedUsers.sort((a, b) => {
       const timeA = a.lastMessagedAt ? new Date(a.lastMessagedAt).getTime() : 0;
       const timeB = b.lastMessagedAt ? new Date(b.lastMessagedAt).getTime() : 0;
@@ -94,12 +103,11 @@ sendMessage: async (messageData) => {
 
 
 
-subscribeToMessages: () => {
-  const socket = useAuthStore.getState().socket;
-  if (!socket) return;
 
-  socket.on("newMessage", (newMessage) => {
-    console.log("New message received:", newMessage);
+subscribeToMessages: () => {
+  const socket = getSocket();
+  socket.off("newMessage").on("newMessage", (newMessage) => {
+    console.log("📩 [FRONTEND] New message received:", newMessage);
 
     set((state) => {
       let updatedUsers = state.users.map((user) =>
@@ -108,7 +116,6 @@ subscribeToMessages: () => {
           : user
       );
 
-      // ✅ Sort users after updating lastMessagedAt
       updatedUsers.sort((a, b) => {
         const timeA = a.lastMessagedAt ? new Date(a.lastMessagedAt).getTime() : 0;
         const timeB = b.lastMessagedAt ? new Date(b.lastMessagedAt).getTime() : 0;

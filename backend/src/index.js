@@ -20,11 +20,13 @@ const __dirname = path.resolve();
 const allowedOrigins = [
   "http://localhost:5173",
   "https://chatapp003.vercel.app",
+  "wss://chatapp003.vercel.app",
   "https://fullstack-chat-4vla6v6q8-abhiyendru01s-projects.vercel.app",
   "http://localhost:5001",
   "ws://localhost:5001",
   "https://stardust-chatapp-production.up.railway.app",  
-  "wss://stardust-chatapp-production.up.railway.app", 
+  "wss://stardust-chatapp-production.up.railway.app",
+
 ];
 
 

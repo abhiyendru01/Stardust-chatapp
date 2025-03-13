@@ -1,6 +1,6 @@
 // src/lib/firebase.js
-import firebase from "firebase/app";
-import "firebase/messaging";
+import { initializeApp } from "firebase/app";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDDL8n-cfyXtocY1deAuFY2LBsVVkLn1uw",
@@ -12,30 +12,38 @@ const firebaseConfig = {
   appId: "1:806602114681:web:c8e427920ff3425d1f76a8",
    measurementId: "G-EM3WZ8NRDG"
 };
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
 
-firebase.initializeApp(firebaseConfig);
-
-const messaging = firebase.messaging();
-
-// Request permission to send notifications and get the token
-export const requestPermission = async () => {
+// ✅ Function to get FCM token for push notifications
+export const requestForToken = async () => {
   try {
-    await messaging.requestPermission();
-    const token = await messaging.getToken();
-    console.log("FCM Token:", token);
-
-    // Optionally, send the token to your backend to store it for push notifications
-  } catch (err) {
-    console.log("Error getting permission:", err);
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      const token = await getToken(messaging, {
+        vapidKey: "YOUR_PUBLIC_VAPID_KEY", // 🔹 Get this from Firebase Console > Cloud Messaging
+      });
+      console.log("FCM Token:", token);
+      return token;
+    } else {
+      console.warn("🔴 Permission denied for notifications");
+      return null;
+    }
+  } catch (error) {
+    console.error("❌ Error getting FCM token:", error);
+    return null;
   }
 };
 
-// Handle background and foreground messages
-messaging.onMessage((payload) => {
-  console.log("Message received. ", payload);
+// ✅ Handle incoming foreground messages
+onMessage(messaging, (payload) => {
+  console.log("📩 Received foreground message:", payload);
   new Notification(payload.notification.title, {
     body: payload.notification.body,
+    icon: payload.notification.icon || "/default-icon.png",
   });
 });
 
-export { messaging };
+
+export { messaging, getToken, onMessage };
+

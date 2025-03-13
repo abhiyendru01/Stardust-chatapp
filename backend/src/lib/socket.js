@@ -1,8 +1,10 @@
 import { Server } from "socket.io";
+import admin from "firebase-admin";
 import http from "http";
 import express from "express";
 import User from "../models/user.model.js"; // User model for FCM token lookup
 import { sendPushNotification } from "./firebaseAdmin.js"; // Push notification sender
+import Message from "../models/message.model.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -13,6 +15,7 @@ const io = new Server(server, {
     origin: [
       "http://localhost:5173",
       "https://chatapp003.vercel.app",
+      "http://localhost:5001",
       "https://stardust-chatapp-production.up.railway.app"
     ],
     methods: ["GET", "POST"],
@@ -25,6 +28,20 @@ const io = new Server(server, {
 
 
 let userSocketMap = {}; // Store userId to socketId mapping
+async function saveMessageToDB(senderId, receiverId, message) {
+  try {
+      const newMessage = new Message({
+          senderId,
+          receiverId,
+          text: message.text,
+          createdAt: new Date(),
+      });
+      await newMessage.save();
+      console.log("✅ Message saved to DB");
+  } catch (error) {
+      console.error("❌ Error saving message:", error);
+  }
+}
 
 // ✅ Function to retrieve receiver's FCM token from DB
 async function getReceiverFCMToken(receiverId) {
@@ -98,11 +115,9 @@ io.on("connection", (socket) => {
       console.warn(`❌ User ${receiverId} is not online.`);
   
       // ✅ Send Push Notification as a fallback
-      const receiverFCMToken = await getReceiverFCMToken(receiverId);
-      if (receiverFCMToken) {
-        await sendPushNotification(receiverFCMToken, `${callerName} is calling you!`);
-      } else {
-        console.warn(`🚨 No FCM token available for User ${receiverId}.`);
+      const fcmToken = await getReceiverFCMToken(receiverId);
+      if (fcmToken) {
+        sendPushNotification(receiverId, { senderId: callerId, senderName: callerName, senderProfile: callerProfile });
       }
     }
   });
@@ -120,21 +135,43 @@ io.on("connection", (socket) => {
 
   // ✉️ Handle Sending Messages
   socket.on("sendMessage", async ({ receiverId, message }) => {
-    console.log(`📩 [SERVER] Received message from ${userId} to ${receiverId}:`, message);
+    console.log(`📩 [SERVER] Received message from ${message.senderId} to ${receiverId}:`, message);
 
+    // Ensure userId is set correctly
+    const senderId = message.senderId;  
+    if (!senderId || !receiverId) {
+        console.error("❌ [SERVER] Missing senderId or receiverId.");
+        return;
+    }
+
+    // ✅ Send message to the receiver if they are online
     const receiverSocketId = userSocketMap[receiverId];
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("newMessage", { senderId: userId, message });
+        console.log(`✅ [SERVER] Sending message to receiver: ${receiverSocketId}`);
+        io.to(receiverSocketId).emit("newMessage", { senderId, message });
     } else {
-      console.warn(`⚠️ [SERVER] Receiver ${receiverId} is offline.`);
+        console.warn(`⚠️ [SERVER] Receiver ${receiverId} is offline. Sending push notification...`);
+
+        // ✅ Send push notification since the user is offline
+        await sendPushNotification(receiverId, message);
     }
 
-    const senderSocketId = getReceiverSocketId(userId);
+    // ✅ Send message back to the sender so it appears instantly on their chat
+    const senderSocketId = userSocketMap[senderId];
     if (senderSocketId) {
         console.log(`✅ [SERVER] Sending message back to sender: ${senderSocketId}`);
-        io.to(socket.id).emit("newMessage", { senderId: userId, message });
+        io.to(senderSocketId).emit("newMessage", { senderId, message });
+    }
+
+    // ✅ Store message in the database (Assuming you have a function to save messages)
+    try {
+        await saveMessageToDB(senderId, receiverId, message);
+        console.log(`📩 [SERVER] Message stored in DB: ${message.text}`);
+    } catch (error) {
+        console.error("❌ [SERVER] Error storing message:", error);
     }
 });
+
 
 });
 

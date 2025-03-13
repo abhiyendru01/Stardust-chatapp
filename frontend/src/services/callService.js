@@ -21,3 +21,18 @@ export const saveCallLog = async (callData) => {
     console.error("Error saving call log:", error);
   }
 };
+
+/** ✅ Start Agora Call (Get Token) */
+export const startAgoraCall = async (callerId, receiverId) => {
+  try {
+    const response = await axios.post(`${API_URL}/agora-token`, {
+      callerId,
+      receiverId,
+    }, { withCredentials: true });
+
+    return response.data.token;
+  } catch (error) {
+    console.error("Error generating Agora token:", error);
+    return null;
+  }
+};

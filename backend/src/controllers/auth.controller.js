@@ -121,7 +121,17 @@ export const updateProfile = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+export const storeFCMToken = async (req, res) => {
+  const { token } = req.body;
+  const userId = req.user.id;
 
+  try {
+    await User.findByIdAndUpdate(userId, { fcmToken: token });
+    res.status(200).json({ message: "FCM token stored successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error storing FCM token" });
+  }
+};
 
 export const checkAuth = (req, res) => {
   try {

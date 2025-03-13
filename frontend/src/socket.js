@@ -3,33 +3,45 @@ import { useAuthStore } from "./store/useAuthStore";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 
-const authUser = useAuthStore.getState().authUser;
+let socket = null;
 
-const socket = io(backendUrl, {
-  withCredentials: true,
-  transports: ["polling", "websocket"],
-  secure: backendUrl.startsWith("https"),
-  path: "/socket.io/", 
-  query: { userId: authUser?._id }, 
-  reconnection: true, // ✅ Enable auto-reconnection
-  reconnectionAttempts: 10, // ✅ Retry 10 times before failing
-  reconnectionDelay: 5000, // ✅ Wait 5 sec before retrying
-});
+// ✅ Correctly export `getSocket()`
+export const getSocket = () => {
+  if (!socket) {
+    const authUser = useAuthStore.getState().authUser;
 
-socket.on("connect", () => {
-  console.log(`✅ Connected to WebSocket server at ${backendUrl}`);
-});
+    if (!authUser) {
+      console.warn("⚠️ No authenticated user found, delaying socket connection.");
+      return null;
+    }
 
-socket.on("disconnect", (reason) => {
-  console.log("🔴 Disconnected from WebSocket server. Reason:", reason);
-  if (reason === "io server disconnect") {
-    console.log("🌀 Attempting to reconnect...");
-    socket.connect(); // ✅ Force reconnection
+    socket = io(backendUrl, {
+      withCredentials: true,
+      transports: ["websocket"],
+      secure: backendUrl.startsWith("https"),
+      path: "/socket.io/",
+      query: { userId: authUser?._id },
+    });
+
+    socket.on("connect", () => {
+      console.log(`✅ Connected to WebSocket server at ${backendUrl}`);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("🔴 Disconnected from WebSocket server");
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("⚠️ Socket connection error:", error.message);
+    });
   }
-});
+  return socket;
+};
 
-socket.on("connect_error", (error) => {
-  console.error("⚠️ Socket connection error:", error.message);
-});
-
-export default socket;
+// ✅ Optional: Export `disconnectSocket` for cleanup
+export const disconnectSocket = () => {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+};

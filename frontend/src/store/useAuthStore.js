@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
+import { requestForToken } from "../lib/firebase";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 
@@ -22,7 +23,12 @@ export const useAuthStore = create((set, get) => ({
 
       const res = await axiosInstance.get("/auth/check");
       set({ authUser: res.data });
-      get().connectSocket();  // Connect socket if the user is authenticated
+      get().connectSocket(); 
+      
+      const fcmToken = await requestForToken();
+      if (fcmToken) {
+        await axiosInstance.post("/auth/store-fcm-token", { token: fcmToken });
+      }// Connect socket if the user is authenticated
     } catch (error) {
       console.log("Error in checkAuth:", error);
       set({ authUser: null });

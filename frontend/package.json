@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "agora-rtc-react": "^2.3.0",
+    "agora-rtc-sdk-ng": "^4.23.2",
     "axios": "^1.7.7",
     "daisyui": "^4.12.23",
     "dotenv": "^16.4.7",

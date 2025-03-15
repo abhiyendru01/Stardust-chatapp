@@ -35,11 +35,11 @@ const themeColorMap = {
   sunset: "#0b151b",
 };
 
-// ✅ Move the function ABOVE `useThemeStore`
-const updateManifestTheme = (theme) => {
+// ✅ Function to update theme-color meta tag & manifest.json dynamically
+const updateThemeColors = (theme) => {
   const themeColor = themeColorMap[theme] || themeColorMap["light"];
 
-  // 🔥 Update the <meta name="theme-color">
+  // 🔥 Update <meta name="theme-color">
   let themeColorMeta = document.querySelector('meta[name="theme-color"]');
   if (!themeColorMeta) {
     themeColorMeta = document.createElement("meta");
@@ -48,7 +48,7 @@ const updateManifestTheme = (theme) => {
   }
   themeColorMeta.setAttribute("content", themeColor);
 
-  // Update manifest.json dynamically
+  // 🔥 Update Manifest Dynamically
   const manifest = {
     short_name: "Stardust",
     name: "Chat Application by Abhiyendru",
@@ -62,25 +62,40 @@ const updateManifestTheme = (theme) => {
     display: "standalone",
   };
 
-  const stringManifest = JSON.stringify(manifest);
-  const blob = new Blob([stringManifest], { type: "application/json" });
-  const manifestURL = URL.createObjectURL(blob);
+  const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+  const manifestURL = URL.createObjectURL(manifestBlob);
   const timestamp = new Date().getTime();
-  const manifestLink = document.querySelector('link[rel="manifest"]');
-  if (manifestLink) {
-    manifestLink.setAttribute("href", `${manifestURL}?v=${timestamp}`);
+  
+  let manifestLink = document.querySelector('link[rel="manifest"]');
+  if (!manifestLink) {
+    manifestLink = document.createElement("link");
+    manifestLink.setAttribute("rel", "manifest");
+    document.head.appendChild(manifestLink);
   }
+  manifestLink.setAttribute("href", `${manifestURL}?v=${timestamp}`);
+
+  console.log("🔄 Theme Updated:", theme, " | Theme-Color:", themeColor);
 };
 
-// ✅ Ensure this function is AFTER `updateManifestTheme`
+// ✅ Zustand Store for Managing Theme
 export const useThemeStore = create((set) => ({
   theme: localStorage.getItem("chat-theme") || "wireframe",
+
   setTheme: (theme) => {
     localStorage.setItem("chat-theme", theme);
-    updateManifestTheme(theme); // 🔥 No more red line
-
     document.documentElement.setAttribute("data-theme", theme);
+    updateThemeColors(theme);
     
     set({ theme });
   },
+
+  // ✅ Load saved theme on app start
+  initTheme: () => {
+    const savedTheme = localStorage.getItem("chat-theme") || "wireframe";
+    document.documentElement.setAttribute("data-theme", savedTheme);
+    updateThemeColors(savedTheme);
+  },
 }));
+
+// ✅ Apply Theme on App Load
+useThemeStore.getState().initTheme();

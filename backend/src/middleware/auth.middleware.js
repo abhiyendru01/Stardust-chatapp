@@ -5,11 +5,10 @@ export const protectRoute = async (req, res, next) => {
   try {
     let token;
 
-    // Check for token in Authorization header
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-      token = req.headers.authorization.split(' ')[1]; // Extract token from 'Bearer <token>'
+      token = req.headers.authorization.split(' ')[1]; 
     } else if (req.cookies?.jwt) {
-      token = req.cookies.jwt; // This is for compatibility if you still want to support cookies
+      token = req.cookies.jwt; 
     }
 
     if (!token) {
@@ -28,8 +27,8 @@ export const protectRoute = async (req, res, next) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    req.user = user;  // Attach user to the request object
-    next();  // Proceed to the next middleware or route handler
+    req.user = user; 
+    next();  
   } catch (error) {
     console.error('Error in protectRoute middleware:', error.message);
     res.status(500).json({ message: 'Internal server error' });

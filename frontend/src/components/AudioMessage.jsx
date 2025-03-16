@@ -5,15 +5,23 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [duration, setDuration] = useState("0:15");
+  const [duration, setDuration] = useState("0:00");
 
   useEffect(() => {
     if (!waveformRef.current) return;
 
+    // Function to fetch DaisyUI colors
+    const getThemeColor = (variable, fallback) => 
+      getComputedStyle(document.documentElement).getPropertyValue(variable)?.trim() || fallback;
+
+    let waveColor = getThemeColor("--bc", "#ffffff"); // base-content fallback: white
+    let progressColor = getThemeColor("--pc", "#22c1c3"); // primary-content fallback: teal
+
+    // Create WaveSurfer instance
     wavesurfer.current = WaveSurfer.create({
       container: waveformRef.current,
-      waveColor: isSender ? "#ffffff" : "#333333", // Ensure proper contrast
-      progressColor: "#ff7f50",
+      waveColor,
+      progressColor,
       barWidth: 2,
       barGap: 3,
       barRadius: 3,
@@ -28,13 +36,15 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
 
     wavesurfer.current.load(audioSrc);
 
+    // Get duration
     wavesurfer.current.on("ready", () => {
-      const time = Math.ceil(wavesurfer.current.getDuration() || 15);
+      const time = Math.ceil(wavesurfer.current.getDuration() || 0);
       const minutes = Math.floor(time / 60);
       const seconds = time % 60;
       setDuration(`${minutes}:${seconds.toString().padStart(2, "0")}`);
     });
 
+    // Play/Pause events
     wavesurfer.current.on("play", () => setIsPlaying(true));
     wavesurfer.current.on("pause", () => setIsPlaying(false));
     wavesurfer.current.on("finish", () => setIsPlaying(false));
@@ -44,7 +54,24 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
         wavesurfer.current.destroy();
       }
     };
-  }, [audioSrc, isSender]);
+  }, [audioSrc]);
+
+  // Update colors when theme changes
+  useEffect(() => {
+    const updateColors = () => {
+      if (wavesurfer.current) {
+        wavesurfer.current.setOptions({
+          waveColor: getComputedStyle(document.documentElement).getPropertyValue("--bc") || "#ffffff",
+          progressColor: getComputedStyle(document.documentElement).getPropertyValue("--pc") || "#22c1c3",
+        });
+      }
+    };
+
+    const observer = new MutationObserver(updateColors);
+    observer.observe(document.documentElement, { attributes: true });
+
+    return () => observer.disconnect();
+  }, []);
 
   const togglePlay = () => {
     if (wavesurfer.current) {
@@ -56,7 +83,7 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
     <div className={`chat ${isSender ? "chat-end" : "chat-start"} w-full max-w-[90%] sm:max-w-[75%]`}>
       <div className={`
         rounded-lg p-3 shadow-md flex items-center gap-3 
-        ${isSender ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"}
+        ${isSender ? "bg-base-200 text-primary-content" : "bg-primary text-base-content"}
         w-full max-w-[350px] sm:max-w-[400px] md:max-w-[450px]
       `}>
         {/* Play/Pause Button */}

@@ -5,3 +5,7 @@ export function formatMessageTime(date) {
     hour12: false,
   });
 }
+
+export function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}

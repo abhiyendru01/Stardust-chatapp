@@ -129,20 +129,20 @@ const ChatHeader = () => {
       <audio ref={ringingRef} src="./audio/ringing.mp3" preload="auto" loop />
       <audio ref={incomingRingtoneRef} src="./audio/incoming_call.mp3" preload="auto" loop />
 
-      <div className="p-3.5 border-b bg-base-200 border-base-300 backdrop-blur-md flex justify-between items-center">
+      <div className="p-3.5 sticky top-0 z-10 border-b-2 rounded-b-2xl border-primary/40 bg-base-200  backdrop-blur-md flex justify-between items-center h-20">
         <button onClick={() => setSelectedUser(null)} className="p-2 rounded-3xl hover:bg-base-300">
           <ArrowLeft className="h-5 w-5 text-base-content" />
         </button>
 
-        <div className="flex flex-col items-center">
-          <h3 className="font-bold text-lg">{selectedUser?.fullName}</h3>
-          <p className="text-sm text-base-content/70">
+        <div className="absolute left-1/2 transform -translate-x-1/2 text-center">
+          <h3 className="font-bold text-lg text-center">{selectedUser?.fullName}</h3>
+          <p className="text-sm text-base-content/70 text-center">
             {onlineUsers.includes(selectedUser?._id) ? "Online" : "Offline"}
           </p>
-          {callStatus && <p className="text-sm text-gray-500">{callStatus}</p>}
+          {callStatus && <p className="text-sm text-gray-500 text-center">{callStatus}</p>}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-0.5">
           {/* ✅ Video Call Button */}
           <button onClick={handleVideoCall} className="rounded-lg p-3 bg-base-300/80 hover:bg-base-300 text-base-content">
             <Video className="w-5 h-5 text-base-content/70" />

@@ -193,7 +193,7 @@ const handleSendMessage = async (e) => {
   }
 
   return (
-    <div className="p-4 w-full border-t bg-base-200/80 border-base-300 backdrop-blur-md shadow-lg transition-all duration-300">
+    <div className="p-4 w-full border-t-2 rounded-t-3xl border-primary/40 bg-base-200/80  backdrop-blur-md shadow-lg transition-all duration-300">
       {imagePreview && (
         <div className="mb-3 flex items-center gap-2 animate-in slide-in-from-bottom duration-300">
           <div className="relative">

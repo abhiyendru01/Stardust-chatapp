@@ -9,6 +9,7 @@ import { cn } from "../lib/utils"
 
 
 io()
+const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 
 const MessageInput = () => {
   const [text, setText] = useState("")
@@ -27,15 +28,11 @@ const MessageInput = () => {
   // Function to send audio to the backend
   const sendAudioToServer = async (audioBlob) => {
     const formData = new FormData();
-    
-    // ✅ Convert blob to File object before sending
     const audioFile = new File([audioBlob], "voice-note.wav", { type: "audio/wav" });
     formData.append("audio", audioFile);
   
     try {
-      const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
       console.log(`🔗 Uploading to: ${API_URL}/api/messages/upload-audio`);
-  
       const response = await fetch(`${API_URL}/api/messages/upload-audio`, {
         method: "POST",
         body: formData,
@@ -53,7 +50,6 @@ const MessageInput = () => {
       return null;
     }
   };
-  
 
   // Handle image selection
   const handleImageChange = (e) => {

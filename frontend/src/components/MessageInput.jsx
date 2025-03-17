@@ -9,7 +9,9 @@ import { cn } from "../lib/utils"
 
 
 io()
-const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
+const API_URL = import.meta.env.VITE_BACKEND_URL.startsWith("http")
+  ? import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")
+  : `https://${import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")}`;
 
 const MessageInput = () => {
   const [text, setText] = useState("")
@@ -32,8 +34,10 @@ const MessageInput = () => {
     formData.append("audio", audioFile);
   
     try {
-      console.log(`🔗 Uploading to: ${API_URL}/api/messages/upload-audio`);
-      const response = await fetch(`${API_URL}/api/messages/upload-audio`, {
+      const uploadURL = `${API_URL}/api/messages/upload-audio`;
+      console.log(`🔗 Correct Uploading to: ${uploadURL}`); // ✅ Debugging log
+  
+      const response = await fetch(uploadURL, {  // ✅ Ensure absolute URL
         method: "POST",
         body: formData,
       });
@@ -50,6 +54,7 @@ const MessageInput = () => {
       return null;
     }
   };
+  
 
   // Handle image selection
   const handleImageChange = (e) => {

@@ -61,7 +61,7 @@ export const getUsersForSidebar = async (req, res) => {
 
 export const uploadAudio = async (req, res) => {
   try {
-    console.log("Received request to upload audio");
+    console.log("📥 Received audio upload request...");
 
     if (!req.file) {
       console.error("❌ No audio file received");
@@ -70,9 +70,13 @@ export const uploadAudio = async (req, res) => {
 
     console.log("✅ Audio file received:", req.file);
 
-    const result = await new Promise((resolve, reject) => {
+    const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
-        { resource_type: "auto", folder: "audio" },
+        {
+          resource_type: "video", // ✅ Cloudinary treats audio as "video"
+          folder: "audio-messages",
+          format: "mp3", // ✅ Convert to MP3 for better compatibility
+        },
         (error, result) => {
           if (error) {
             console.error("❌ Cloudinary Upload Error:", error);
@@ -85,7 +89,7 @@ export const uploadAudio = async (req, res) => {
       ).end(req.file.buffer);
     });
 
-    return res.status(200).json({ url: result.secure_url });
+    return res.status(200).json({ url: uploadResult.secure_url });
   } catch (error) {
     console.error("❌ Unexpected Error in uploadAudio:", error);
     return res.status(500).json({ error: "Internal Server Error" });

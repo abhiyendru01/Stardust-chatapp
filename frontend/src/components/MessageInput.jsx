@@ -27,10 +27,15 @@ const MessageInput = () => {
   // Function to send audio to the backend
   const sendAudioToServer = async (audioBlob) => {
     const formData = new FormData();
-    formData.append("audio", audioBlob);
+    
+    // ✅ Convert blob to File object before sending
+    const audioFile = new File([audioBlob], "voice-note.wav", { type: "audio/wav" });
+    formData.append("audio", audioFile);
   
     try {
       const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
+      console.log(`🔗 Uploading to: ${API_URL}/api/messages/upload-audio`);
+  
       const response = await fetch(`${API_URL}/api/messages/upload-audio`, {
         method: "POST",
         body: formData,
@@ -41,8 +46,8 @@ const MessageInput = () => {
       }
   
       const data = await response.json();
-      console.log("✅ Audio uploaded successfully:", data.url); // Log audio URL
-      return data.url; // Return valid Cloudinary URL
+      console.log("✅ Audio uploaded successfully:", data.url);
+      return data.url;
     } catch (error) {
       console.error("❌ Error uploading audio:", error);
       return null;

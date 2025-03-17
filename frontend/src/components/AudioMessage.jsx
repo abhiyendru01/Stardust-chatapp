@@ -6,18 +6,24 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
   const wavesurfer = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState("0:00");
-
   useEffect(() => {
-    if (!waveformRef.current) return;
-
+    if (!audioSrc || !waveformRef.current) return; // Prevent errors if audioSrc is missing
+  
+    console.log("🎵 Loading audio from URL:", audioSrc); // Debugging
+  
     // Function to fetch DaisyUI colors
     const getThemeColor = (variable, fallback) => 
       getComputedStyle(document.documentElement).getPropertyValue(variable)?.trim() || fallback;
-
+  
     let waveColor = getThemeColor("--bc", "#ffffff"); // base-content fallback: white
     let progressColor = getThemeColor("--pc", "#22c1c3"); // primary-content fallback: teal
-
-    // Create WaveSurfer instance
+  
+    // Cleanup previous instance before creating a new one
+    if (wavesurfer.current) {
+      wavesurfer.current.destroy();
+    }
+  
+    // Create a new WaveSurfer instance
     wavesurfer.current = WaveSurfer.create({
       container: waveformRef.current,
       waveColor,
@@ -33,9 +39,15 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
       partialRender: true,
       barMinHeight: 3,
     });
-
+  
+    // Load the audio file
     wavesurfer.current.load(audioSrc);
-
+  
+    // Handle errors in loading audio
+    wavesurfer.current.on("error", (error) => {
+      console.error("❌ Error loading audio:", error);
+    });
+  
     // Get duration
     wavesurfer.current.on("ready", () => {
       const time = Math.ceil(wavesurfer.current.getDuration() || 0);
@@ -43,19 +55,21 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
       const seconds = time % 60;
       setDuration(`${minutes}:${seconds.toString().padStart(2, "0")}`);
     });
-
-    // Play/Pause events
+  
+    // Play/Pause event listeners
     wavesurfer.current.on("play", () => setIsPlaying(true));
     wavesurfer.current.on("pause", () => setIsPlaying(false));
     wavesurfer.current.on("finish", () => setIsPlaying(false));
-
+  
+    // Cleanup function to prevent memory leaks
     return () => {
       if (wavesurfer.current) {
         wavesurfer.current.destroy();
+        wavesurfer.current = null;
       }
     };
-  }, [audioSrc]);
-
+  }, [audioSrc]); // Only reload when `audioSrc` changes
+  
   // Update colors when theme changes
   useEffect(() => {
     const updateColors = () => {

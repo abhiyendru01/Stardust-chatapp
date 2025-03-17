@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
+import { Camera, Mic } from "lucide-react";
 import Navbar from "./Navbar"; 
 
 const Sidebar = () => {
@@ -138,9 +139,23 @@ const Sidebar = () => {
            <div className={`font-semibold ${user.unreadCount > 0 ? "font-bold" : ""}`}>
              {user.fullName}
            </div>
-           <div className={`text-sm ${user.unreadCount > 0 ? "font-extrabold text-base-content/90" : "text-zinc-400"}`}>
-  {user.lastMessage || "No messages yet"}
+           
+           <div className={`text-sm flex items-center gap-1 ${user.unreadCount > 0 ? "font-extrabold text-base-content/90" : "text-zinc-400"}`}>
+  {user.lastMessage ? (
+    user.lastMessage.includes("📷 Image") ? (
+      <>
+        <Camera size={14} className="text-green-500" /> <span>Image</span>
+      </>
+    ) : user.lastMessage.includes("🎵 Voice Note") ? (
+      <>
+        <Mic size={14} className="text-green-500" /> <span>Voice Note</span>
+      </>
+    ) : (
+      user.lastMessage
+    )
+  ) : "No messages yet"}
 </div>
+
 
          </div>
        

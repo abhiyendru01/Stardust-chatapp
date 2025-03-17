@@ -16,7 +16,6 @@ const MessageInput = () => {
   const [isRecording, setIsRecording] = useState(false)
   const [recordingDuration, setRecordingDuration] = useState(0)
   const [audioBlob, setAudioBlob] = useState(null)
-  const [, setAudioUrl] = useState(null)
   const [waveformValues, setWaveformValues] = useState(Array(20).fill(2))
   const fileInputRef = useRef(null)
   const mediaRecorderRef = useRef(null)
@@ -26,30 +25,30 @@ const MessageInput = () => {
   const { sendMessage } = useChatStore()
 
   // Function to send audio to the backend
-  const sendAudioToServer = async (audioFile) => {
-    const formData = new FormData()
-    formData.append("audio", audioFile)
-
+  const sendAudioToServer = async (audioBlob) => {
+    const formData = new FormData();
+    formData.append("audio", audioBlob);
+  
     try {
-      const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001"
-
+      const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
       const response = await fetch(`${API_URL}/api/messages/upload-audio`, {
         method: "POST",
         body: formData,
-      })
-
+      });
+  
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
-
-      const data = await response.json()
-      console.log("Audio uploaded successfully:", data.url)
-      return data.url
+  
+      const data = await response.json();
+      console.log("✅ Audio uploaded successfully:", data.url); // Log audio URL
+      return data.url; // Return valid Cloudinary URL
     } catch (error) {
-      console.error("Error uploading audio:", error)
-      return null
+      console.error("❌ Error uploading audio:", error);
+      return null;
     }
-  }
+  };
+  
 
   // Handle image selection
   const handleImageChange = (e) => {
@@ -71,32 +70,34 @@ const MessageInput = () => {
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault()
-    if (!text.trim() && !imagePreview && !audioBlob) return
+const handleSendMessage = async (e) => {
+  e.preventDefault();
+  if (!text.trim() && !imagePreview && !audioBlob) return;
 
-    // Upload the audio to the server and get the URL
-    let audioUrl = null
-    if (audioBlob) {
-      audioUrl = await sendAudioToServer(audioBlob) // Upload audio
-    }
-
-    try {
-      await sendMessage({
-        text: text.trim(),
-        image: imagePreview,
-        audio: audioUrl, // Send the audio URL
-      })
-
-      setText("")
-      setImagePreview(null)
-      setAudioBlob(null)
-      setAudioUrl(null)
-      if (fileInputRef.current) fileInputRef.current.value = ""
-    } catch (error) {
-      console.error("Failed to send message:", error)
+  let audioUrl = null;
+  if (audioBlob) {
+    audioUrl = await sendAudioToServer(audioBlob); // Ensure we get a valid Cloudinary URL
+    if (!audioUrl) {
+      toast.error("Audio upload failed! Please try again.");
+      return;
     }
   }
+
+  try {
+    await sendMessage({
+      text: text.trim(),
+      image: imagePreview,
+      audio: audioUrl, // Send Cloudinary URL instead of blob
+    });
+
+    setText("");
+    setImagePreview(null);
+    setAudioBlob(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  } catch (error) {
+    console.error("❌ Failed to send message:", error);
+  }
+}
 
   // Animate waveform
   useEffect(() => {

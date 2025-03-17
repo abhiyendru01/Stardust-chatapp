@@ -25,7 +25,7 @@ export const getUsersForSidebar = async (req, res) => {
         ],
       })
         .sort({ timestamp: -1 })
-        .select("text timestamp senderId isRead");
+        .select("text image audio timestamp senderId isRead");
 
       // ✅ Count unread messages from this user
       const unreadCount = await Message.countDocuments({
@@ -34,17 +34,30 @@ export const getUsersForSidebar = async (req, res) => {
         isRead: false,
       });
 
-      user.lastMessage = lastMessage ? lastMessage.text : "";
+      // ✅ Determine last message type
+      let lastMessagePreview = "";
+      if (lastMessage) {
+        if (lastMessage.text) {
+          lastMessagePreview = lastMessage.text; // Show text message
+        } else if (lastMessage.image) {
+          lastMessagePreview = "📷 Image"; // Indicate it's an image
+        } else if (lastMessage.audio) {
+          lastMessagePreview = "🎵 Voice Note"; // Indicate it's an audio message
+        }
+      }
+
+      user.lastMessage = lastMessagePreview;
       user.lastMessageTime = lastMessage ? lastMessage.timestamp : null;
-      user.unreadCount = unreadCount; // ✅ Add unread count to the response
+      user.unreadCount = unreadCount;
     }
 
     res.status(200).json(users);
   } catch (error) {
-    console.error("Error in getUsersForSidebar:", error.message);
+    console.error("❌ Error in getUsersForSidebar:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 export const uploadAudio = async (req, res) => {
   try {
@@ -116,28 +129,57 @@ export const sendMessage = async (req, res) => {
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
-    let imageUrl;
+    let imageUrl = null;
+    let audioUrl = null;
+
+    // ✅ Upload image if provided
     if (image) {
-      const uploadResponse = await cloudinary.uploader.upload(image);
-      imageUrl = uploadResponse.secure_url;
+      try {
+        const uploadResponse = await cloudinary.uploader.upload(image);
+        imageUrl = uploadResponse.secure_url;
+      } catch (error) {
+        console.error("❌ Image upload failed:", error);
+      }
     }
 
-    // ✅ Save message with `isRead: false`
+    // ✅ Upload audio if provided and ensure it's a Cloudinary URL
+    if (audio && audio.startsWith("data:audio")) {
+      try {
+        const uploadAudioResponse = await cloudinary.uploader.upload(audio, {
+          resource_type: "video", // Cloudinary uses 'video' for audio files
+          folder: "audio-messages",
+        });
+        audioUrl = uploadAudioResponse.secure_url;
+        console.log("✅ Audio successfully uploaded:", audioUrl);
+      } catch (error) {
+        console.error("❌ Audio upload failed:", error);
+        return res.status(500).json({ error: "Audio upload failed" });
+      }
+    } else {
+      audioUrl = audio; // If it's already a URL, store it directly
+    }
+
+    // ✅ Ensure at least one valid message type is present
+    if (!text && !imageUrl && !audioUrl) {
+      return res.status(400).json({ error: "Message cannot be empty!" });
+    }
+
+    // ✅ Save message with correct data
     const newMessage = new Message({
       senderId,
       receiverId,
       text,
       image: imageUrl,
-      audio,
+      audio: audioUrl, // Now always contains a proper Cloudinary URL
       timestamp: new Date(),
-      isRead: false, 
+      isRead: false,
     });
 
     await newMessage.save();
 
     // ✅ Update lastMessagedAt for both users
-    await User.findByIdAndUpdate(senderId, { lastMessagedAt: new Date() }, { new: true });
-    await User.findByIdAndUpdate(receiverId, { lastMessagedAt: new Date() }, { new: true });
+    await User.findByIdAndUpdate(senderId, { lastMessagedAt: new Date() });
+    await User.findByIdAndUpdate(receiverId, { lastMessagedAt: new Date() });
 
     // ✅ Emit the new message to BOTH sender & receiver
     const receiverSocketId = getReceiverSocketId(receiverId);
@@ -147,13 +189,13 @@ export const sendMessage = async (req, res) => {
       io.to(receiverSocketId).emit("newMessage", newMessage);
     }
 
-    if (senderSocketId) {  // ✅ Ensure sender also sees the message instantly
+    if (senderSocketId) {  
       io.to(senderSocketId).emit("newMessage", newMessage);
     }
 
     res.status(201).json(newMessage);
   } catch (error) {
-    console.log("Error in sendMessage controller:", error.message);
+    console.log("❌ Error in sendMessage controller:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

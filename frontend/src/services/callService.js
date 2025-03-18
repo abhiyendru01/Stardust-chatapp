@@ -1,52 +1,51 @@
-import axios from "axios";
-import toast from "react-hot-toast";
 
-export const saveCallLog = async ({ caller, receiver, callType, status, duration }) => {
+
+const API_URL = import.meta.env.VITE_BACKEND_URL.startsWith("http")
+  ? import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")
+  : `https://${import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")}`;
+
+export const fetchAgoraToken = async (channelName, uid) => {
   try {
-    const token = localStorage.getItem("authToken"); // ✅ Get token from storage
-    if (!token) throw new Error("No token found. Please log in again.");
-
-    const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/calls/log`, 
-      { caller, receiver, callType, status, duration }, 
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // ✅ Include token in headers
-        },
-      }
-    );
-
-    console.log("📞 Call log saved:", res.data);
-    return res.data;
-  } catch (error) {
-    console.error("❌ Error saving call log:", error.response?.data || error.message);
-    toast.error(error.response?.data?.message || "Failed to save call log.");
-  }
-};
-
-export const fetchRecentCalls = async (userId) => {
-  try {
-    const token = localStorage.getItem("authToken");  // ✅ Get token from storage
-    if (!token) throw new Error("No token found. Please log in again.");
-
-    console.log("Fetching recent calls for:", userId);  // ✅ Debugging Log
-
-    const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/calls/${userId}`, {
+    const response = await fetch(`${API_URL}/api/calls/token`, {
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,  // ✅ Include token in headers
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,  // ✅ Ensure Token is Sent
       },
+      body: JSON.stringify({ channelName, uid }),
     });
 
-    console.log("API Response:", res.data);  // ✅ Log response
+    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
 
-    if (!res.data || !res.data.calls) {
-      console.warn("⚠️ No calls returned from API.");
-      return [];
-    }
-
-    return res.data.calls;
+    const data = await response.json();
+    console.log("✅ Agora Token Received:", data);
+    return data.token;
   } catch (error) {
-    console.error("❌ Error fetching recent calls:", error.response?.data || error.message);
-    toast.error(error.response?.data?.message || "Failed to fetch recent calls.");
-    return [];
+    console.error("❌ Error fetching Agora token:", error);
+    return null;
   }
 };
+
+export const saveCallLog = async (callData) => {
+  try {
+    const response = await fetch(`${API_URL}/api/calls/log`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`, // ✅ Send Token
+      },
+      body: JSON.stringify(callData),
+    });
+
+    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+
+    const data = await response.json();
+    console.log("✅ Call log saved successfully:", data);
+    return data;
+  } catch (error) {
+    console.error("❌ Error saving call log:", error);
+    return null;
+  }
+};
+
+

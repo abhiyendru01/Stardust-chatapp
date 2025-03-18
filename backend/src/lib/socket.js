@@ -1,83 +1,179 @@
-import { useEffect, useState, useRef } from "react";
-import AgoraRTC from "agora-rtc-sdk-ng";
-import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowLeft } from "lucide-react";
-import axios from "axios";
+import { Server } from "socket.io";
+import admin from "firebase-admin";
+import http from "http";
+import express from "express";
+import User from "../models/user.model.js"; // User model for FCM token lookup
+import { sendPushNotification } from "./firebaseAdmin.js"; // Push notification sender
+import Message from "../models/message.model.js";
 
-const VideoCallUI = ({ channelName, token, onEndCall, caller }) => {
-  const agoraClient = useRef(null);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOn, setIsVideoOn] = useState(true);
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
+const app = express();
+const server = http.createServer(app);
 
-  useEffect(() => {
-    if (!token) return;
+// Initialize Socket.io server with CORS settings
+const io = new Server(server, {
+  cors: {
+    origin: [
+      "http://localhost:5173",
+      "https://chatapp003.vercel.app",
+      "http://localhost:5001",
+      "https://stardust-chatapp-production.up.railway.app"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+  transports: ["polling", "websocket"],
+  allowEIO3: true,
+  path: "/socket.io/",
+});
 
-    const initCall = async () => {
-      agoraClient.current = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
-      await agoraClient.current.join(import.meta.env.VITE_AGORA_APP_ID, channelName, token, null);
+let userSocketMap = {}; // Store userId to socketId mapping
+async function saveMessageToDB(senderId, receiverId, message) {
+  try {
+      const newMessage = new Message({
+          senderId,
+          receiverId,
+          text: message.text,
+          createdAt: new Date(),
+      });
+      await newMessage.save();
+      console.log("✅ Message saved to DB");
+  } catch (error) {
+      console.error("❌ Error saving message:", error);
+  }
+}
 
-      const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-      const localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+// ✅ Function to retrieve receiver's FCM token from DB
+async function getReceiverFCMToken(receiverId) {
+  try {
+    const user = await User.findById(receiverId);
+    if (!user || !user.fcmToken) {
+      console.warn(`⚠️ No FCM token found for User ${receiverId}`);
+      return null;
+    }
+    return user.fcmToken;
+  } catch (error) {
+    console.error("❌ Error retrieving FCM token:", error);
+    return null;
+  }
+}
 
-      if (localVideoRef.current) {
-        localVideoTrack.play(localVideoRef.current);
+// ✅ Function to get receiver's socket ID
+export function getReceiverSocketId(receiverId) {
+  return userSocketMap[receiverId] || null;
+}
+
+io.on("connection", (socket) => {
+  console.log(`✅ WebSocket Connected: ${socket.id}`);
+
+  const userId = socket.handshake.query.userId;
+
+  if (!userId) {
+    console.error("❌ No userId provided, disconnecting socket.");
+    socket.disconnect();
+    return;
+  }
+
+
+  userSocketMap[userId] = socket.id;
+  console.log(`🟢 User ${userId} is online.`);
+  io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+  socket.on("disconnect", (reason) => {
+    console.log(`🔴 User ${userId} disconnected. Reason: ${reason}`);
+    delete userSocketMap[userId];
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  });
+  // 📞 Handle Incoming Calls
+  socket.on("call", ({ receiverId, callerId, callerName, callerProfile }) => {
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      console.log(`📞 Sending call from ${callerId} to ${receiverId}`);
+      io.to(receiverSocketId).emit("incomingCall", { callerId, callerName, callerProfile });
+    } else {
+      console.warn(`❌ User ${receiverId} is not online.`);
+    }
+  });
+
+  // 📲 Handle Call Responses
+  socket.on("callAccepted", ({ callerId }) => {
+    const callerSocketId = getReceiverSocketId(callerId);
+    if (callerSocketId) io.to(callerSocketId).emit("callAccepted");
+  });
+
+  socket.on("callRejected", ({ callerId }) => {
+    const callerSocketId = getReceiverSocketId(callerId);
+    if (callerSocketId) io.to(callerSocketId).emit("callRejected");
+  });
+  socket.on("call", async ({ receiverId, callerId, callerName, callerProfile }) => {
+    const receiverSocketId = userSocketMap[receiverId];
+  
+    if (receiverSocketId) {
+      console.log(`📞 Sending call from ${callerId} to ${receiverId}`);
+      io.to(receiverSocketId).emit("incomingCall", { callerId, callerName, callerProfile });
+    } else {
+      console.warn(`❌ User ${receiverId} is not online.`);
+  
+      // ✅ Send Push Notification as a fallback
+      const fcmToken = await getReceiverFCMToken(receiverId);
+      if (fcmToken) {
+        sendPushNotification(receiverId, { senderId: callerId, senderName: callerName, senderProfile: callerProfile });
       }
+    }
+  });
+  
+  // ⌨️ Handle Typing Events
+  socket.on("typing", (receiverId) => {
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) io.to(receiverSocketId).emit("typing", userId);
+  });
 
-      await agoraClient.current.publish([localAudioTrack, localVideoTrack]);
+  socket.on("stopTyping", (receiverId) => {
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) io.to(receiverSocketId).emit("stopTyping", userId);
+  });
 
-      agoraClient.current.on("user-published", async (user, mediaType) => {
-        await agoraClient.current.subscribe(user, mediaType);
-        if (mediaType === "video" && remoteVideoRef.current) {
-          user.videoTrack.play(remoteVideoRef.current);
-        }
-      });
+  // ✉️ Handle Sending Messages
+  socket.on("sendMessage", async ({ receiverId, message }) => {
+    console.log(`📩 [SERVER] Received message from ${message.senderId} to ${receiverId}:`, message);
 
-      agoraClient.current.on("user-unpublished", (user) => {
-        console.log("User left call:", user.uid);
-      });
-    };
+    // Ensure userId is set correctly
+    const senderId = message.senderId;  
+    if (!senderId || !receiverId) {
+        console.error("❌ [SERVER] Missing senderId or receiverId.");
+        return;
+    }
 
-    initCall();
+    // ✅ Send message to the receiver if they are online
+    const receiverSocketId = userSocketMap[receiverId];
+    if (receiverSocketId) {
+        console.log(`✅ [SERVER] Sending message to receiver: ${receiverSocketId}`);
+        io.to(receiverSocketId).emit("newMessage", { senderId, message });
+    } else {
+        console.warn(`⚠️ [SERVER] Receiver ${receiverId} is offline. Sending push notification...`);
 
-    return () => {
-      agoraClient.current.leave();
-    };
-  }, [channelName, token]);
+        // ✅ Send push notification since the user is offline
+        await sendPushNotification(receiverId, message);
+    }
 
-  return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-green-100 to-green-200 text-white">
-      {/* Fullscreen Remote Video */}
-      <div className="absolute inset-0 flex justify-center items-center">
-        <div ref={remoteVideoRef} className="w-full h-full bg-black"></div>
-      </div>
+    // ✅ Send message back to the sender so it appears instantly on their chat
+    const senderSocketId = userSocketMap[senderId];
+    if (senderSocketId) {
+        console.log(`✅ [SERVER] Sending message back to sender: ${senderSocketId}`);
+        io.to(senderSocketId).emit("newMessage", { senderId, message });
+    }
 
-      {/* Mini Preview - Self Video */}
-      <div className="absolute top-10 right-6 w-20 h-20 rounded-full border-2 border-white overflow-hidden">
-        <div ref={localVideoRef} className="w-full h-full bg-gray-800"></div>
-      </div>
+    // ✅ Store message in the database (Assuming you have a function to save messages)
+    try {
+        await saveMessageToDB(senderId, receiverId, message);
+        console.log(`📩 [SERVER] Message stored in DB: ${message.text}`);
+    } catch (error) {
+        console.error("❌ [SERVER] Error storing message:", error);
+    }
+});
 
-      {/* Caller Info */}
-      <div className="absolute top-14 text-center">
-        <h2 className="text-2xl font-semibold">{caller?.fullName}</h2>
-        <p className="text-lg text-gray-300">00:14:12</p>
-      </div>
 
-      {/* Call Controls */}
-      <div className="absolute bottom-10 flex gap-6">
-        <button onClick={() => setIsMuted(!isMuted)} className="bg-white/20 p-4 rounded-full">
-          {isMuted ? <MicOff size={28} /> : <Mic size={28} />}
-        </button>
-        <button onClick={() => setIsVideoOn(!isVideoOn)} className="bg-white/20 p-4 rounded-full">
-          {isVideoOn ? <Video size={28} /> : <VideoOff size={28} />}
-        </button>
-        <button onClick={onEndCall} className="bg-red-600 p-4 rounded-full">
-          <PhoneOff size={28} />
-        </button>
-      </div>
-    </div>
-  );
-};
+});
 
-export default VideoCallUI;
+// Export the app, server, and io
+export { app, server, io };

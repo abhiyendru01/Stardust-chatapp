@@ -48,4 +48,17 @@ export const saveCallLog = async (callData) => {
   }
 };
 
+import { axiosInstance } from "../lib/axios";
 
+// ✅ Fetch Recent Calls
+export const fetchRecentCalls = async (userId) => {
+  try {
+    console.log(`🔗 Fetching recent calls for User: ${userId}`);
+    const response = await axiosInstance.get(`/calls/${userId}`);
+    console.log("✅ API Response (Recent Calls):", response.data); // Debugging
+    return response.data.calls || [];
+  } catch (error) {
+    console.error("❌ Error fetching recent calls:", error);
+    return [];
+  }
+};

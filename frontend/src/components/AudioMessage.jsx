@@ -19,8 +19,8 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
     const getThemeColor = (variable, fallback) =>
       getComputedStyle(document.documentElement).getPropertyValue(variable)?.trim() || fallback;
 
-    const waveColor = getThemeColor( "#cccccc"); 
-    const progressColor = getThemeColor("#5acf0c");
+    const waveColor = getThemeColor("--bc", "#cccccc"); // Base Content
+    const progressColor = getThemeColor("--p", "#5acf0c"); // Primary
 
     // ✅ Create a new WaveSurfer instance
     wavesurfer.current = WaveSurfer.create({
@@ -47,6 +47,10 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
       setDuration(new Date(time * 1000).toISOString().substring(14, 19));
     });
 
+    // ✅ Handle Play/Pause State
+    wavesurfer.current.on("play", () => setIsPlaying(true));
+    wavesurfer.current.on("pause", () => setIsPlaying(false));
+
     // ✅ Cleanup on unmount
     return () => {
       if (wavesurfer.current) {
@@ -58,7 +62,6 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
   const togglePlay = () => {
     if (wavesurfer.current) {
       wavesurfer.current.playPause();
-      setIsPlaying(wavesurfer.current.isPlaying());
     }
   };
 

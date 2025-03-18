@@ -57,3 +57,27 @@ export const saveCallLog = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
+export const getRecentCalls = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "User ID is required" });
+    }
+
+    const calls = await Call.find({
+      $or: [{ caller: userId }, { receiver: userId }],
+    })
+      .populate("caller", "fullName profilePic")
+      .populate("receiver", "fullName profilePic")
+      .sort({ createdAt: -1 }) // Sort by latest calls
+      .limit(20);
+
+    res.status(200).json({ success: true, calls });
+  } catch (error) {
+    console.error("❌ Error fetching recent calls:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+

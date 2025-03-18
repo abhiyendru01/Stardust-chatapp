@@ -10,7 +10,7 @@ import CallUI from "./CallUI"; // ✅ Import CallUI
 import { io } from "socket.io-client";
 import "./bubble.css";
 
-const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001');
+const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:5001");
 
 const ChatContainer = () => {
   const {
@@ -24,6 +24,18 @@ const ChatContainer = () => {
 
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
+  
+  // ✅ Viewport height state (Fixes iOS keyboard issue)
+  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
+
+  useEffect(() => {
+    const adjustHeight = () => {
+      setViewportHeight(window.visualViewport.height);
+    };
+
+    window.visualViewport.addEventListener("resize", adjustHeight);
+    return () => window.visualViewport.removeEventListener("resize", adjustHeight);
+  }, []);
 
   // ✅ Call State
   const [isInCall, setIsInCall] = useState(false);
@@ -37,21 +49,21 @@ const ChatContainer = () => {
       setCallStatus("Ringing...");
       setIsInCall(true);
     });
-  
+
     socket.on("callAccepted", () => {
       setCallStatus("In Call");
     });
-  
+
     socket.on("callEnded", () => {
       setIsInCall(false);
       setCaller(null);
       setCallStatus("");
     });
-  
+
     socket.on("newMessage", (message) => {
       console.log("📩 [FRONTEND] Received new message:", message);
     });
-  
+
     return () => {
       socket.off("incomingCall");
       socket.off("callAccepted");
@@ -94,7 +106,6 @@ const ChatContainer = () => {
   if (isInCall) {
     return <CallUI caller={caller} callStatus={callStatus} onAcceptCall={handleAcceptCall} onEndCall={handleEndCall} />;
   }
-  
 
   // ✅ Loading state
   if (isMessagesLoading) {
@@ -113,7 +124,10 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full max-h-screen">
+    <div
+      className="flex-1 flex flex-col h-full max-h-screen"
+      style={{ height: viewportHeight }} // ✅ Fixes iOS keyboard issue
+    >
       <ChatHeader />
       <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[calc(100vh-10rem)]">
         {messages.length > 0 ? (
@@ -177,9 +191,12 @@ const ChatContainer = () => {
         )}
         <div ref={messageEndRef}></div>
       </div>
-      <MessageInput />
+
+      {/* ✅ Fix Input Bar Positioning */}
+      <div className="fixed bottom-0 left-0 w-full bg-base-200 p-3" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <MessageInput />
+      </div>
     </div>
-    
   );
 };
 

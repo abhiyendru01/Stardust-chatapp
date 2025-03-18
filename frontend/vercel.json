@@ -12,5 +12,11 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/socket.io/(.*)",
+      "destination": "https://stardust-chatapp-production.up.railway.app/socket.io/$1"
+    }
   ]
 }

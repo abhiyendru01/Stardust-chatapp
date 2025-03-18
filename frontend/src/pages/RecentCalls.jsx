@@ -27,13 +27,7 @@ const RecentCalls = () => {
   
 
   // ✅ Show loading state
-  if (calls === null) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-500">Loading recent calls...</p>
-      </div>
-    );
-  }
+
 
   // ✅ Ensure calls is always an array
   const filteredCalls = (calls || []).filter((call) =>

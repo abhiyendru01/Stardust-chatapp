@@ -10,46 +10,80 @@ export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
 
-    // ✅ Fetch users excluding the logged-in user
-    let users = await User.find({ _id: { $ne: loggedInUserId } })
-      .select("fullName email profilePic lastMessagedAt")
-      .sort({ lastMessagedAt: -1 })
-      .lean();
-
-    // ✅ Fetch the latest message & unread count for each user
-    for (let user of users) {
-      const lastMessage = await Message.findOne({
-        $or: [
-          { senderId: loggedInUserId, receiverId: user._id },
-          { senderId: user._id, receiverId: loggedInUserId },
-        ],
-      })
-        .sort({ timestamp: -1 })
-        .select("text image audio timestamp senderId isRead");
-
-      // ✅ Count unread messages from this user
-      const unreadCount = await Message.countDocuments({
-        senderId: user._id,
-        receiverId: loggedInUserId,
-        isRead: false,
-      });
-
-      // ✅ Determine last message type
-      let lastMessagePreview = "";
-      if (lastMessage) {
-        if (lastMessage.text) {
-          lastMessagePreview = lastMessage.text; // Show text message
-        } else if (lastMessage.image) {
-          lastMessagePreview = "📷 Image"; // Indicate it's an image
-        } else if (lastMessage.audio) {
-          lastMessagePreview = "🎵 Voice Note"; // Indicate it's an audio message
-        }
-      }
-
-      user.lastMessage = lastMessagePreview;
-      user.lastMessageTime = lastMessage ? lastMessage.timestamp : null;
-      user.unreadCount = unreadCount;
-    }
+    // ✅ Optimized MongoDB Aggregation Query
+    const users = await User.aggregate([
+      {
+        $match: { _id: { $ne: loggedInUserId } }, // Exclude logged-in user
+      },
+      {
+        $lookup: {
+          from: "messages",
+          let: { userId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $and: [{ $eq: ["$senderId", loggedInUserId] }, { $eq: ["$receiverId", "$$userId"] }] },
+                    { $and: [{ $eq: ["$senderId", "$$userId"] }, { $eq: ["$receiverId", loggedInUserId] }] },
+                  ],
+                },
+              },
+            },
+            { $sort: { timestamp: -1 } },
+            { $limit: 1 }, // Get only the latest message
+            { $project: { text: 1, image: 1, audio: 1, timestamp: 1, senderId: 1, isRead: 1 } },
+          ],
+          as: "lastMessage",
+        },
+      },
+      {
+        $lookup: {
+          from: "messages",
+          let: { userId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$senderId", "$$userId"] },
+                    { $eq: ["$receiverId", loggedInUserId] },
+                    { $eq: ["$isRead", false] }, // Count only unread messages
+                  ],
+                },
+              },
+            },
+            { $count: "unreadCount" },
+          ],
+          as: "unreadMessages",
+        },
+      },
+      {
+        $addFields: {
+          lastMessage: { $arrayElemAt: ["$lastMessage", 0] }, // Convert array to object
+          unreadCount: { $ifNull: [{ $arrayElemAt: ["$unreadMessages.unreadCount", 0] }, 0] },
+        },
+      },
+      {
+        $project: {
+          fullName: 1,
+          email: 1,
+          profilePic: 1,
+          lastMessagedAt: 1,
+          lastMessage: {
+            $cond: [
+              { $ifNull: ["$lastMessage.text", false] }, "$lastMessage.text",
+              { $ifNull: ["$lastMessage.image", false] }, "📷 Image",
+              { $ifNull: ["$lastMessage.audio", false] }, "🎵 Voice Note",
+              ""
+            ]
+          },
+          lastMessageTime: "$lastMessage.timestamp",
+          unreadCount: 1,
+        },
+      },
+      { $sort: { lastMessageTime: -1 } }, // Sort by latest message time
+    ]);
 
     res.status(200).json(users);
   } catch (error) {
@@ -57,6 +91,7 @@ export const getUsersForSidebar = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 
 export const uploadAudio = async (req, res) => {

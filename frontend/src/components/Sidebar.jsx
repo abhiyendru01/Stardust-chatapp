@@ -61,13 +61,13 @@ const Sidebar = () => {
     });
 
   return (
-    <aside className="h-full w-full lg:w-72 border-r border-base-300 bg-base-100 flex flex-col">
-      <div className="hidden lg:block">
+    <aside className="h-screen fixed w-full lg:w-72 border-r border-base-300 bg-base-100  flex flex-col backdrop-blur-md">
+      <div className="hidden lg:block ">
         <Navbar />
       </div>
 
       {/* Search Bar */}
-      <div className="border-b-2 rounded-b-3xl border-primary/40 w-full p-5 h-40 bg-primary/20 backdrop-blur">
+      <div className="border-b-2 rounded-b-3xl border-primary/70 w-full p-5 h-40 bg-primary/20 backdrop-blur-md">
         <div className="flex items-center gap-2">
         <h1 className="mt-6 text-2xl font-bold text-base-content">Chats</h1>
         <Users className="mt-6 text-base-content justify-end" />

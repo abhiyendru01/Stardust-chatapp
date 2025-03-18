@@ -41,7 +41,7 @@ const RecentCalls = () => {
       <div className="border-b-2 rounded-b-3xl border-primary/40 w-full p-5 h-50 bg-primary/20 backdrop-blur">
         <div className="flex items-center gap-2">
           <Phone className="mt-6 size-6" />
-          <span className="font-light text-xl">Recent Calls</span>
+          <h1 className="mt-6 text-2xl font-bold text-base-content">Recent Calls</h1>
         </div>
         <div className="w-full p-3 lg:px-3 lg:py-2">
           <input

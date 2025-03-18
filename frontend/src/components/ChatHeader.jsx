@@ -25,8 +25,21 @@ const ChatHeader = () => {
   const fetchAgoraToken = async () => {
     if (!selectedUser?._id) return;
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/calls/agora-token/${selectedUser._id}`);
-      const data = await response.json();
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5001"}/api/calls/token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          channelName: selectedUser._id,
+          uid: authUser._id,
+        }),
+      });
+  
+      const text = await response.text(); // Read response as text
+      console.log("📝 Raw Response:", text); // Log raw response
+  
+      const data = JSON.parse(text); // Try parsing JSON
       setAgoraToken(data.token);
     } catch (error) {
       console.error("❌ Error fetching Agora token:", error);

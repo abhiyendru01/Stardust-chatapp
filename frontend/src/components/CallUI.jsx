@@ -78,14 +78,14 @@ const VoiceCallUI = ({
       </div>
 
       {/* Call Controls */}
-      <div className="absolute bottom-6 flex gap-5 bg-black/50 backdrop-blur-lg px-6 py-4 rounded-3xl">
+      <div className="absolute bottom-6 flex gap-5 bg-black/30 backdrop-blur-lg px-6 py-4 rounded-3xl">
         {/* Mute Button */}
         <button 
           onClick={() => {
             setIsMuted(!isMuted);
             localAudioTrack.current.setMuted(!isMuted);
           }} 
-          className="bg-gray-800 p-4 rounded-full hover:bg-gray-700"
+          className="bg-base-200 p-4 rounded-full hover:bg-base-100"
         >
           {isMuted ? <MicOff size={28} /> : <Mic size={28} />}
         </button>
@@ -93,7 +93,7 @@ const VoiceCallUI = ({
         {/* Speaker Toggle Button */}
         <button 
           onClick={toggleSpeaker} 
-          className="bg-gray-800 p-4 rounded-full hover:bg-gray-700"
+          className="bg-base-200 p-4 rounded-full hover:bg-base-300"
         >
           {isSpeakerOn ? <VolumeX size={28} /> : <Volume2 size={28} />}
         </button>
@@ -101,7 +101,7 @@ const VoiceCallUI = ({
         {/* End Call Button */}
         <button 
           onClick={onEndCall} 
-          className="bg-red-600 p-4 rounded-full hover:bg-red-700"
+          className="bg-red-600/90 p-4 rounded-full hover:bg-red-700"
         >
           <PhoneOff size={28} />
         </button>

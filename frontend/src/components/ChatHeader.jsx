@@ -142,7 +142,7 @@ const ChatHeader = () => {
       <audio ref={ringingRef} src="./audio/ringing.mp3" preload="auto" loop />
       <audio ref={incomingRingtoneRef} src="./audio/incoming_call.mp3" preload="auto" loop />
 
-      <div className="p-3.5 sticky top-0 z-10 border-b-2 rounded-b-2xl border-primary/40 bg-base-200  backdrop-blur-md flex justify-between items-center h-20">
+      <div className="p-3.5 sticky top-0 z-10 border-b-2 rounded-b-2xl border-base-200 bg-base-200  backdrop-blur-md flex justify-between items-center h-20">
         <button onClick={() => setSelectedUser(null)} className="p-2 rounded-3xl hover:bg-base-300">
           <ArrowLeft className="h-5 w-5 text-base-content" />
         </button>

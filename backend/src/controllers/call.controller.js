@@ -33,3 +33,27 @@ export const generateAgoraToken = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
+export const saveCallLog = async (req, res) => {
+  try {
+    const { caller, receiver, callType, status, duration } = req.body;
+
+    if (!caller || !receiver || !callType || !status) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    const call = new Call({
+      caller,
+      receiver,
+      callType,
+      status,
+      duration: duration || 0,
+    });
+
+    await call.save();
+    res.status(201).json({ success: true, message: "Call logged successfully", call });
+  } catch (error) {
+    console.error("❌ Error saving call log:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};

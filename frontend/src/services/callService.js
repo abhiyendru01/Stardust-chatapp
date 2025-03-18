@@ -1,10 +1,12 @@
 
 
-const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
+const API_URL = import.meta.env.VITE_BACKEND_URL.startsWith("http")
+  ? import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")
+  : `https://${import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")}`;
 
 export const fetchAgoraToken = async (channelName, uid) => {
   try {
-    const response = await fetch(`${BASE_URL}/api/calls/token`, {
+    const response = await fetch(`${API_URL}/api/calls/token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -26,7 +28,7 @@ export const fetchAgoraToken = async (channelName, uid) => {
 
 export const saveCallLog = async (callData) => {
   try {
-    const response = await fetch(`${BASE_URL}/api/calls/log`, {
+    const response = await fetch(`${API_URL}/api/calls/log`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -9,20 +9,21 @@ import Message from "../models/message.model.js";
 const app = express();
 const server = http.createServer(app);
 
+// Initialize Socket.io server with CORS settings
 const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:5173",
-      "https://stardust-chatapp-frontend.onrender.com",
-      "https://stardust-chatapp-09.onrender.com",
+      "https://chatapp003.vercel.app",
+      "http://localhost:5001",
+      "https://stardust-chatapp-production.up.railway.app"
     ],
     methods: ["GET", "POST"],
     credentials: true,
   },
   transports: ["websocket"],
   allowEIO3: true,
-  pingInterval: 10000,
-  pingTimeout: 5000,
+  path: "/socket.io/",
 });
 
 

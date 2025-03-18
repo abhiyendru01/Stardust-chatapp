@@ -10,7 +10,7 @@ import CallUI from "./CallUI"; // ✅ Import CallUI
 import { io } from "socket.io-client";
 import "./bubble.css";
 
-const socket = io(import.meta.env.MODE === "development" ? "http://localhost:5001" : "/");
+const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001');
 
 const ChatContainer = () => {
   const {

@@ -13,20 +13,14 @@
       ]
     }
   ],
-  "routes": [
-    {
-      "src": "/audio/(.*)",
-      "dest": "/public/audio/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/public/$1"
-    }
-  ],
   "rewrites": [
     {
       "source": "/socket.io/(.*)",
       "destination": "https://stardust-chatapp-production.up.railway.app/socket.io/$1"
+    },
+    {
+      "source": "/audio/(.*)",
+      "destination": "/public/audio/$1"
     }
   ]
 }

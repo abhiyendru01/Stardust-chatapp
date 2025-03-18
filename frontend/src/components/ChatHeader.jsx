@@ -25,8 +25,21 @@ const ChatHeader = () => {
   const fetchAgoraToken = async () => {
     if (!selectedUser?._id) return;
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/calls/agora-token/${selectedUser._id}`);
-      const data = await response.json();
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5001"}/api/calls/token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          channelName: selectedUser._id,
+          uid: authUser._id,
+        }),
+      });
+  
+      const text = await response.text(); // Read response as text
+      console.log("📝 Raw Response:", text); // Log raw response
+  
+      const data = JSON.parse(text); // Try parsing JSON
       setAgoraToken(data.token);
     } catch (error) {
       console.error("❌ Error fetching Agora token:", error);
@@ -129,7 +142,7 @@ const ChatHeader = () => {
       <audio ref={ringingRef} src="./audio/ringing.mp3" preload="auto" loop />
       <audio ref={incomingRingtoneRef} src="./audio/incoming_call.mp3" preload="auto" loop />
 
-      <div className="p-3.5 sticky top-0 z-10 border-b-2 rounded-b-2xl border-primary/40 bg-base-200  backdrop-blur-md flex justify-between items-center h-20">
+      <div className="p-3.5 sticky top-0 z-10 border-b-2 rounded-b-2xl border-base-200 bg-base-200  backdrop-blur-md flex justify-between items-center h-20">
         <button onClick={() => setSelectedUser(null)} className="p-2 rounded-3xl hover:bg-base-300">
           <ArrowLeft className="h-5 w-5 text-base-content" />
         </button>

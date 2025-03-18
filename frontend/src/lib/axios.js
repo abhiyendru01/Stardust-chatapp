@@ -1,32 +1,45 @@
 import axios from "axios";
 import { API_CONFIG } from "./constants";
 
-// Create and configure axios instance
+// ✅ Fix API URL Formatting
+const API_URL = import.meta.env.MODE === "development"
+  ? API_CONFIG.DEVELOPMENT_URL.replace(/\/$/, "")  // Remove trailing slash
+  : API_CONFIG.PRODUCTION_URL.replace(/\/$/, "");
+
+console.log("✅ API Base URL:", API_URL); // Debugging
+
+// ✅ Create and configure axios instance
 export const axiosInstance = axios.create({
-  baseURL: import.meta.env.MODE === "development" 
-    ? API_CONFIG.DEVELOPMENT_URL 
-    : API_CONFIG.PRODUCTION_URL,
-  withCredentials: false,  // No need for credentials since we're using localStorage
+  baseURL: API_URL,
+  withCredentials: true, // Set to `true` if using cookies for auth
   headers: {
-    "Content-Type": "application/json",  // Default for JSON requests
+    "Content-Type": "application/json",
   },
 });
 
-
-
-// Add an interceptor to automatically add the token to headers
+// ✅ Add an interceptor to automatically attach auth tokens
 axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("authToken");
-  if (token) {
-    config.headers["Authorization"] = `Bearer ${token}`;
-  }
+  try {
+    const token = localStorage.getItem("authToken");
+    
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+      if (import.meta.env.MODE === "development") {
+        console.log("🔑 Auth Token Attached:", token);
+      }
+    }
 
-  // Check if the request is a FormData (for file uploads)
-  if (config.data instanceof FormData) {
-    config.headers["Content-Type"] = "multipart/form-data"; // Set content-type for file uploads
-  }
+    // ✅ Handle FormData requests for file uploads
+    if (config.data instanceof FormData) {
+      config.headers["Content-Type"] = "multipart/form-data";
+    }
 
-  return config;
+    return config;
+  } catch (error) {
+    console.error("❌ Error attaching token:", error);
+    return Promise.reject(error);
+  }
 }, (error) => {
   return Promise.reject(error);
 });
+

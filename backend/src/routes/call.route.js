@@ -4,7 +4,7 @@ import { protectRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/token", protectRoute, generateAgoraToken); // Generate Agora Token
+router.post("/token", generateAgoraToken);
 router.post("/log", protectRoute, saveCallLog); // Save a call log
 router.get("/:userId", protectRoute, getRecentCalls); // Fetch recent calls
 

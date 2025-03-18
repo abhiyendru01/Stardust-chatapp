@@ -16,7 +16,7 @@ const Footer = () => {
 
   return (
     <div className="flex justify-center items-center relative w-full h-16 p-0">
-      <div className="relative border border-base-300 w-full rounded-2xl flex shadow-lg bg-primary/25 backdrop-blur-md">
+      <div className="relative border-t border-primary/10 w-full rounded-t-2xl flex shadow-lg bg-primary/25 backdrop-blur-md ">
         
         {/* Active Tab Indicator - Slides to the correct position */}
         <motion.div

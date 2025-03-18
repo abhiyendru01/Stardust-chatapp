@@ -5,7 +5,7 @@ import { useChatStore } from "../store/useChatStore";
 import { saveCallLog } from "../services/callService";
 import { io } from "socket.io-client";
 import VideoCallUI from "./VideoCallUI";
-import CallUI from "./CallUI"; // ✅ Added CallUI for audio calls
+import CallUI from "./CallUI";
 
 const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:5001");
 
@@ -13,7 +13,7 @@ const ChatHeader = () => {
   const { selectedUser, setSelectedUser } = useChatStore();
   const { authUser, onlineUsers } = useAuthStore();
   const [videoCall, setVideoCall] = useState(false);
-  const [audioCall, setAudioCall] = useState(false); // ✅ Added state for audio calls
+  const [audioCall, setAudioCall] = useState(false);
   const [incomingCall, setIncomingCall] = useState(null);
   const [agoraToken, setAgoraToken] = useState(null);
   const [callStatus, setCallStatus] = useState("");
@@ -25,54 +25,71 @@ const ChatHeader = () => {
   const fetchAgoraToken = async () => {
     if (!selectedUser?._id) return;
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5001"}/api/calls/token`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/calls/token`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
         body: JSON.stringify({
           channelName: selectedUser._id,
           uid: authUser._id,
         }),
       });
-  
-      const text = await response.text(); // Read response as text
-      console.log("📝 Raw Response:", text); // Log raw response
-  
-      const data = JSON.parse(text); // Try parsing JSON
-      setAgoraToken(data.token);
+
+      const data = await response.json();
+      if (data.success) {
+        setAgoraToken(data.token);
+        console.log("🎥 Agora Token Received:", data.token);
+      } else {
+        console.error("❌ Failed to fetch Agora token:", data.message);
+      }
     } catch (error) {
       console.error("❌ Error fetching Agora token:", error);
     }
   };
 
-  // ✅ Handle Audio Call
-  const handleCall = () => {
-    if (!selectedUser?._id) return;
-    setAudioCall(true); // ✅ Show CallUI
+  // ✅ Handle Video Call
+  const handleVideoCall = async () => {
+    await fetchAgoraToken(); // Fetch token before starting the call
+    setVideoCall(true);
+    setCallStatus("Starting Video Call...");
+
+    // Emit call event to receiver
     socket.emit("call", {
       receiverId: selectedUser._id,
       callerId: authUser._id,
       callerName: authUser.fullName,
       callerProfile: authUser.profilePic,
-      callType: "audio", // ✅ Ensure call type is set
+      callType: "video",
     });
-    setCallStatus("Calling...");
+
     ringingRef.current?.play();
   };
 
-  // ✅ Handle Video Call
-  const handleVideoCall = async () => {
-    await fetchAgoraToken();
-    setVideoCall(true);
+  // ✅ Handle Audio Call
+  const handleAudioCall = () => {
+    if (!selectedUser?._id) return;
+    setAudioCall(true);
+    setCallStatus("Calling...");
+
+    socket.emit("call", {
+      receiverId: selectedUser._id,
+      callerId: authUser._id,
+      callerName: authUser.fullName,
+      callerProfile: authUser.profilePic,
+      callType: "audio",
+    });
+
+    ringingRef.current?.play();
   };
 
   // ✅ Handle Ending Call
   const handleEndCall = () => {
     setAudioCall(false);
+    setVideoCall(false);
     setIncomingCall(null);
     setCallStatus("");
-    setVideoCall(false);
 
     socket.emit("endCall", {
       callerId: authUser._id,
@@ -106,6 +123,7 @@ const ChatHeader = () => {
 
     socket.on("callEnded", () => {
       setAudioCall(false);
+      setVideoCall(false);
       setIncomingCall(null);
       setCallStatus("");
       ringingRef.current?.pause();
@@ -142,7 +160,7 @@ const ChatHeader = () => {
       <audio ref={ringingRef} src="./audio/ringing.mp3" preload="auto" loop />
       <audio ref={incomingRingtoneRef} src="./audio/incoming_call.mp3" preload="auto" loop />
 
-      <div className="p-3.5 sticky top-0 z-10 border-b-2 rounded-b-2xl border-base-200 bg-base-200  backdrop-blur-md flex justify-between items-center h-20">
+      <div className="p-3.5 sticky top-0 z-10 border-b-2 rounded-b-2xl border-base-200 bg-base-200 backdrop-blur-md flex justify-between items-center h-20">
         <button onClick={() => setSelectedUser(null)} className="p-2 rounded-3xl hover:bg-base-300">
           <ArrowLeft className="h-5 w-5 text-base-content" />
         </button>
@@ -162,7 +180,7 @@ const ChatHeader = () => {
           </button>
 
           {/* ✅ Audio Call Button */}
-          <button onClick={handleCall} className="rounded-lg p-3 bg-base-300/80 hover:bg-base-300 text-base-content">
+          <button onClick={handleAudioCall} className="rounded-lg p-3 bg-base-300/80 hover:bg-base-300 text-base-content">
             <Phone className="w-5 h-5 text-base-content/70" />
           </button>
         </div>

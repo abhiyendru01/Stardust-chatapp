@@ -159,12 +159,11 @@ const ChatContainer = () => {
                 )}
 
                 {/* Voice Notes */}
-                {message.audio && message.audio.trim() && (
-  <div className="w-full max-w-[250px] md:max-w-[300px]">
-    <AudioMessage audioSrc={message.audio} />
-  </div>
-)}
-
+                {message.audio && (
+                  <div className="w-full max-w-[250px] md:max-w-[300px]">
+                    <AudioMessage audioSrc={message.audio} />
+                  </div>
+                )}
 
                 {/* Timestamp */}
                 <div className={`mt-1 text-xs ${message.senderId === authUser._id ? "text-primary-content/70" : "text-base-content/60"}`}>

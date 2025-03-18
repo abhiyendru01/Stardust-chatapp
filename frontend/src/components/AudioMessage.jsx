@@ -19,8 +19,8 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
     const getThemeColor = (variable, fallback) =>
       getComputedStyle(document.documentElement).getPropertyValue(variable)?.trim() || fallback;
 
-    const waveColor = getThemeColor("--secondary-text-color", "#cccccc"); 
-    const progressColor = getThemeColor("--primary-text-color", "#5acf0c");
+    const waveColor = getThemeColor( "#cccccc"); 
+    const progressColor = getThemeColor("#5acf0c");
 
     // ✅ Create a new WaveSurfer instance
     wavesurfer.current = WaveSurfer.create({

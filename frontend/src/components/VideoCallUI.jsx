@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import AgoraRTC from "agora-rtc-sdk-ng";
-import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowLeft } from "lucide-react";
+import { PhoneOff, Mic, MicOff, Video, VideoOff } from "lucide-react";
 
 const VideoCallUI = ({ channelName, token, onEndCall, caller }) => {
   const agoraClient = useRef(null);
@@ -47,7 +47,7 @@ const VideoCallUI = ({ channelName, token, onEndCall, caller }) => {
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-green-100 to-green-200 text-white">
-      {ArrowLeft({ size: 24, className: "absolute top-4 left-4" })}
+      
       {/* Fullscreen Remote Video */}
       <div className="absolute inset-0 flex justify-center items-center">
         <div ref={remoteVideoRef} className="w-full h-full bg-black"></div>

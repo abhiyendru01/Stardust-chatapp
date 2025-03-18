@@ -3,7 +3,7 @@ import { Users } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { Camera, Mic } from "lucide-react";
-import Navbar from "./Navbar"; 
+
 
 const Sidebar = () => {
   const { getUsers, users, selectedUser, setSelectedUser } = useChatStore();
@@ -62,9 +62,7 @@ const Sidebar = () => {
 
   return (
     <aside className="h-screen fixed w-full lg:w-72 border-r border-base-300 bg-base-100  flex flex-col backdrop-blur-md">
-      <div className="hidden lg:block ">
-        <Navbar />
-      </div>
+     
 
       {/* Search Bar */}
       <div className="border-b-2 rounded-b-3xl border-primary/70 w-full p-5 h-40 bg-primary/20 backdrop-blur-md">

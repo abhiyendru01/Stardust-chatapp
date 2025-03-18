@@ -27,12 +27,10 @@ const ChatContainer = () => {
   
   // ✅ Viewport height state (Fixes iOS keyboard issue)
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   useEffect(() => {
     const adjustHeight = () => {
       setViewportHeight(window.visualViewport.height);
-      setIsKeyboardOpen(window.visualViewport.height < window.innerHeight);
     };
 
     window.visualViewport.addEventListener("resize", adjustHeight);
@@ -128,18 +126,10 @@ const ChatContainer = () => {
   return (
     <div
       className="flex-1 flex flex-col h-full max-h-screen"
-      style={{
-        height: viewportHeight, // ✅ Dynamically adjusts height to avoid resizing issues
-        transition: "height 0.3s ease", // ✅ Smooth transition for better UX
-      }}
+      style={{ height: viewportHeight }} // ✅ Fixes iOS keyboard issue
     >
       <ChatHeader />
-      <div
-        className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[calc(100vh-10rem)]"
-        style={{
-          paddingBottom: isKeyboardOpen ? "10px" : "0px", // ✅ Adjust padding when keyboard is open
-        }}
-      >
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[calc(100vh-10rem)]">
         {messages.length > 0 ? (
           messages.map((message) => (
             <div
@@ -203,14 +193,7 @@ const ChatContainer = () => {
       </div>
 
       {/* ✅ Fix Input Bar Positioning */}
-      <div
-        className="fixed bottom-0 left-0 w-full bg-base-200 p-3"
-        style={{
-          transform: isKeyboardOpen ? "translateY(-10px)" : "translateY(0px)", // ✅ Adjust when keyboard opens
-          transition: "transform 0.3s ease",
-          paddingBottom: "env(safe-area-inset-bottom)",
-        }}
-      >
+      <div className="fixed bottom-0 left-0 w-full bg-base-200 p-3" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <MessageInput />
       </div>
     </div>

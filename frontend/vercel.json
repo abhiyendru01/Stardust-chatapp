@@ -13,6 +13,16 @@
       ]
     }
   ],
+  "routes": [
+    {
+      "src": "/audio/(.*)",
+      "dest": "/public/audio/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
+  ],
   "rewrites": [
     {
       "source": "/socket.io/(.*)",

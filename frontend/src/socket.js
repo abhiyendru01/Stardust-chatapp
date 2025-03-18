@@ -16,7 +16,7 @@ export const getSocket = () => {
 
     socket = io(backendUrl, {
       withCredentials: true,
-      transports: ["websocket", "polling"],
+      transports: ["websocket"],
       secure: backendUrl.startsWith("https"),
       path: "/socket.io/",
       query: { userId: authUser?._id },

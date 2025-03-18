@@ -34,6 +34,7 @@ const allowedOrigins = [
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
+app.get("/keep-alive", (req, res) => res.send("Server is alive"));
 
 
 app.use(

@@ -8,54 +8,71 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
   const [duration, setDuration] = useState("0:00");
 
   useEffect(() => {
-    if (!audioSrc || !waveformRef.current) return;
+    const loadAudio = async () => {
+      if (!audioSrc) {
+        console.warn("⚠️ No audio source provided.");
+        return;
+      }
 
-    // ✅ Destroy previous instance to prevent overlapping waveforms
-    if (wavesurfer.current) {
-      wavesurfer.current.destroy();
-    }
+      let attempts = 0;
+      const maxAttempts = 10;
 
-    // ✅ Fetch DaisyUI colors dynamically
-  
+      const initWaveSurfer = () => {
+        if (!waveformRef.current) {
+          if (attempts < maxAttempts) {
+            console.warn(`🚨 Waveform container not found, retrying... (Attempt ${attempts + 1})`);
+            attempts++;
+            setTimeout(initWaveSurfer, 200); // Retry after 200ms
+            return;
+          } else {
+            console.error("❌ Waveform container not available after retries.");
+            return;
+          }
+        }
 
-    
-    const waveColor = "#cccccc"; // ✅ Hardcoded color
-const progressColor = "#5acf0c";
+        // ✅ Destroy any existing WaveSurfer instance
+        if (wavesurfer.current) {
+          wavesurfer.current.destroy();
+        }
 
+        wavesurfer.current = WaveSurfer.create({
+          container: waveformRef.current,
+          waveColor: "#cccccc",
+          progressColor: "#5acf0c",
+          barWidth: 3,
+          barGap: 2,
+          barRadius: 3,
+          height: 40,
+          cursorWidth: 0,
+          backend: "WebAudio",
+          responsive: true,
+          normalize: true,
+          partialRender: true,
+          barMinHeight: 3,
+        });
 
-    // ✅ Create a new WaveSurfer instance
-    wavesurfer.current = WaveSurfer.create({
-      container: waveformRef.current,
-      waveColor,
-      progressColor,
-      barWidth: 3,
-      barGap: 2,
-      barRadius: 3,
-      height: 40,
-      cursorWidth: 0,
-      backend: "WebAudio",
-      responsive: true,
-      normalize: true,
-      partialRender: true,
-      barMinHeight: 3,
-      debug: true,  // ✅ Enable debug logs
-    });
-    
-    console.log("🔊 Audio Source:", audioSrc);
-    wavesurfer.current.load(audioSrc);
+        console.log("✅ WaveSurfer instance created:", wavesurfer.current);
+        wavesurfer.current.load(audioSrc);
 
+        wavesurfer.current.on("ready", () => {
+          console.log("✅ WaveSurfer Ready, Duration:", wavesurfer.current.getDuration());
+          const time = Math.ceil(wavesurfer.current.getDuration() || 0);
+          setDuration(new Date(time * 1000).toISOString().substring(14, 19));
+        });
 
-    // ✅ Update duration when ready
-    wavesurfer.current.on("ready", () => {
-      const time = Math.ceil(wavesurfer.current.getDuration() || 0);
-      setDuration(new Date(time * 1000).toISOString().substring(14, 19));
-    });
+        wavesurfer.current.on("error", (e) => {
+          console.error("❌ WaveSurfer Error:", e);
+        });
 
-    // ✅ Handle Play/Pause State
-    wavesurfer.current.on("play", () => setIsPlaying(true));
-    wavesurfer.current.on("pause", () => setIsPlaying(false));
+        wavesurfer.current.on("play", () => setIsPlaying(true));
+        wavesurfer.current.on("pause", () => setIsPlaying(false));
+      };
 
-    // ✅ Cleanup on unmount
+      setTimeout(initWaveSurfer, 100); // Initial delay
+    };
+
+    loadAudio();
+
     return () => {
       if (wavesurfer.current) {
         wavesurfer.current.destroy();
@@ -66,6 +83,7 @@ const progressColor = "#5acf0c";
   const togglePlay = () => {
     if (wavesurfer.current) {
       wavesurfer.current.playPause();
+      setIsPlaying(wavesurfer.current.isPlaying());
     }
   };
 

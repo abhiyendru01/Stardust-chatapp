@@ -16,11 +16,12 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
     }
 
     // ✅ Fetch DaisyUI colors dynamically
-    const getThemeColor = (variable, fallback) =>
-      getComputedStyle(document.documentElement).getPropertyValue(variable)?.trim() || fallback;
+  
 
-    const waveColor = getThemeColor("--bc", "#cccccc"); // Base Content
-    const progressColor = getThemeColor("--p", "#5acf0c"); // Primary
+    
+    const waveColor = "#cccccc"; // ✅ Hardcoded color
+const progressColor = "#5acf0c";
+
 
     // ✅ Create a new WaveSurfer instance
     wavesurfer.current = WaveSurfer.create({
@@ -37,9 +38,12 @@ const AudioMessage = ({ audioSrc, isSender = true }) => {
       normalize: true,
       partialRender: true,
       barMinHeight: 3,
+      debug: true,  // ✅ Enable debug logs
     });
-
+    
+    console.log("🔊 Audio Source:", audioSrc);
     wavesurfer.current.load(audioSrc);
+
 
     // ✅ Update duration when ready
     wavesurfer.current.on("ready", () => {

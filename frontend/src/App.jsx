@@ -15,7 +15,7 @@ import { io } from "socket.io-client";
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 
-const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001');
+const socket = io(import.meta.env.MODE === "development" ? "http://localhost:5001" : "/api");
 
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();

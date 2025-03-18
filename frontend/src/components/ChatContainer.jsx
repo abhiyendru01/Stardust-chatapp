@@ -191,11 +191,7 @@ const ChatContainer = () => {
         )}
         <div ref={messageEndRef}></div>
       </div>
-
-      {/* ✅ Fix Input Bar Positioning */}
-      <div className="fixed bottom-0 left-0 w-full bg-base-200 p-3" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <MessageInput />
-      </div>
     </div>
   );
 };

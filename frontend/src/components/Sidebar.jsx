@@ -71,7 +71,7 @@ const Sidebar = () => {
         <div className="flex items-center gap-2">
         <h1 className="mt-6 text-2xl font-bold text-base-content">Chats</h1>
         <Users className="mt-6 text-base-content justify-end" />
-          <span className="font-medium hidden lg:block">Contacts</span>
+          
         </div>
         <div className="mt-3 hidden lg:flex items-center gap-2">
           <label className="cursor-pointer flex items-center gap-2">

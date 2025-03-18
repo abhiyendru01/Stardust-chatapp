@@ -15,6 +15,7 @@ const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001');
 const ChatContainer = () => {
   const {
     messages,
+    setMessages,
     getMessages,
     isMessagesLoading,
     selectedUser,
@@ -50,6 +51,10 @@ const ChatContainer = () => {
   
     socket.on("newMessage", (message) => {
       console.log("📩 [FRONTEND] Received new message:", message);
+  
+      if (message.senderId === selectedUser?._id) {
+        setMessages((prevMessages) => [...prevMessages, message]); // 🔥 Append message
+      }
     });
   
     return () => {
@@ -58,7 +63,7 @@ const ChatContainer = () => {
       socket.off("callEnded");
       socket.off("newMessage");
     };
-  }, []);
+  },[selectedUser?._id, setMessages]);
 
   // ✅ Handle Accept Call
   const handleAcceptCall = () => {

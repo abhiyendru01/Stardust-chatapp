@@ -5,7 +5,6 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 
 let socket = null;
 
-// ✅ Correctly export `getSocket()`
 export const getSocket = () => {
   if (!socket) {
     const authUser = useAuthStore.getState().authUser;
@@ -17,18 +16,26 @@ export const getSocket = () => {
 
     socket = io(backendUrl, {
       withCredentials: true,
-      transports: ["websocket"],
+      transports: ["websocket", "polling"],
       secure: backendUrl.startsWith("https"),
       path: "/socket.io/",
       query: { userId: authUser?._id },
+      reconnection: true,         // 🔥 Ensures it reconnects
+      reconnectionAttempts: 10,   // 🔥 Try 10 times
+      reconnectionDelay: 2000,    // 🔥 2-second delay before retrying
     });
 
     socket.on("connect", () => {
       console.log(`✅ Connected to WebSocket server at ${backendUrl}`);
     });
 
-    socket.on("disconnect", () => {
-      console.log("🔴 Disconnected from WebSocket server");
+    socket.on("disconnect", (reason) => {
+      console.log("🔴 Disconnected from WebSocket server:", reason);
+      setTimeout(() => {
+        if (!socket.connected) {
+          socket.connect();
+        }
+      }, 5000);
     });
 
     socket.on("connect_error", (error) => {
@@ -38,7 +45,6 @@ export const getSocket = () => {
   return socket;
 };
 
-// ✅ Optional: Export `disconnectSocket` for cleanup
 export const disconnectSocket = () => {
   if (socket) {
     socket.disconnect();

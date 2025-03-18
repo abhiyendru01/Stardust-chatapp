@@ -122,55 +122,39 @@ io.on("connection", (socket) => {
     }
   });
   
-  // ⌨️ Handle Typing Events
-  socket.on("typing", (receiverId) => {
-    const receiverSocketId = getReceiverSocketId(receiverId);
-    if (receiverSocketId) io.to(receiverSocketId).emit("typing", userId);
-  });
 
-  socket.on("stopTyping", (receiverId) => {
-    const receiverSocketId = getReceiverSocketId(receiverId);
-    if (receiverSocketId) io.to(receiverSocketId).emit("stopTyping", userId);
-  });
 
   // ✉️ Handle Sending Messages
   socket.on("sendMessage", async ({ receiverId, message }) => {
     console.log(`📩 [SERVER] Received message from ${message.senderId} to ${receiverId}:`, message);
 
-    // Ensure userId is set correctly
-    const senderId = message.senderId;  
+    const senderId = message.senderId;
     if (!senderId || !receiverId) {
         console.error("❌ [SERVER] Missing senderId or receiverId.");
         return;
     }
 
-    // ✅ Send message to the receiver if they are online
+    // ✅ Save message to DB before emitting
+    await saveMessageToDB(senderId, receiverId, message);
+
+    // ✅ Send message to receiver if online
     const receiverSocketId = userSocketMap[receiverId];
     if (receiverSocketId) {
         console.log(`✅ [SERVER] Sending message to receiver: ${receiverSocketId}`);
-        io.to(receiverSocketId).emit("newMessage", { senderId, message });
+        io.to(receiverSocketId).emit("newMessage", message);
     } else {
         console.warn(`⚠️ [SERVER] Receiver ${receiverId} is offline. Sending push notification...`);
-
-        // ✅ Send push notification since the user is offline
         await sendPushNotification(receiverId, message);
     }
 
-    // ✅ Send message back to the sender so it appears instantly on their chat
+    // ✅ Send message back to sender
     const senderSocketId = userSocketMap[senderId];
     if (senderSocketId) {
         console.log(`✅ [SERVER] Sending message back to sender: ${senderSocketId}`);
-        io.to(senderSocketId).emit("newMessage", { senderId, message });
-    }
-
-    // ✅ Store message in the database (Assuming you have a function to save messages)
-    try {
-        await saveMessageToDB(senderId, receiverId, message);
-        console.log(`📩 [SERVER] Message stored in DB: ${message.text}`);
-    } catch (error) {
-        console.error("❌ [SERVER] Error storing message:", error);
+        io.to(senderSocketId).emit("newMessage", message);
     }
 });
+
 
 
 });

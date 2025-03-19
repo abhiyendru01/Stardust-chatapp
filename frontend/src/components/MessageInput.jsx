@@ -4,14 +4,10 @@ import { useState, useRef, useEffect } from "react"
 import { Image, Send, Mic, X, Pause } from "lucide-react"
 import toast from "react-hot-toast"
 import { useChatStore } from "../store/useChatStore"
-import { io } from "socket.io-client"
+
 import { cn } from "../lib/utils"
 
-
-io()
-const API_URL = import.meta.env.VITE_BACKEND_URL.startsWith("http")
-  ? import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")
-  : `https://${import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")}`;
+ // ✅ Use relative path as frontend & backend share the same domain
 
 const MessageInput = () => {
   const [text, setText] = useState("")
@@ -27,25 +23,25 @@ const MessageInput = () => {
   const animationFrameRef = useRef(null)
   const { sendMessage } = useChatStore()
 
-  // Function to send audio to the backend
+  // ✅ Function to send audio to the backend
   const sendAudioToServer = async (audioBlob) => {
     const formData = new FormData();
     const audioFile = new File([audioBlob], "voice-note.wav", { type: "audio/wav" });
     formData.append("audio", audioFile);
   
     try {
-      const uploadURL = `${API_URL}/api/messages/upload-audio`;
+      const uploadURL = `/api/messages/upload-audio`; // ✅ Use relative path
       console.log(`🔗 Correct Uploading to: ${uploadURL}`); // ✅ Debugging log
-  
-      const response = await fetch(uploadURL, {  // ✅ Ensure absolute URL
+
+      const response = await fetch(uploadURL, { 
         method: "POST",
         body: formData,
       });
-  
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-  
+
       const data = await response.json();
       console.log("✅ Audio uploaded successfully:", data.url);
       return data.url;
@@ -54,7 +50,6 @@ const MessageInput = () => {
       return null;
     }
   };
-  
 
   // Handle image selection
   const handleImageChange = (e) => {

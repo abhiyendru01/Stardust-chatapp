@@ -7,7 +7,7 @@ import { io } from "socket.io-client";
 import VideoCallUI from "./VideoCallUI";
 import CallUI from "./CallUI";
 
-const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:5001");
+const socket = io("/"); // ✅ No need for backend URL
 
 const ChatHeader = () => {
   const { selectedUser, setSelectedUser } = useChatStore();
@@ -25,7 +25,7 @@ const ChatHeader = () => {
   const fetchAgoraToken = async () => {
     if (!selectedUser?._id) return;
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/calls/token`, {
+      const response = await fetch(`/api/calls/token`, { // ✅ Use relative path
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,6 +48,7 @@ const ChatHeader = () => {
       console.error("❌ Error fetching Agora token:", error);
     }
   };
+
 
   // ✅ Handle Video Call
   const handleVideoCall = async () => {

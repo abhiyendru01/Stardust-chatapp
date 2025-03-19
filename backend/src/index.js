@@ -1,86 +1,41 @@
 import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-import cors from "cors";
 import path from "path";
 import helmet from "helmet";
+import compression from "compression";
 import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import friendRoutes from "./routes/friend.route.js";
 import callRoutes from "./routes/call.route.js";
-import compression from "compression";
+import pushNotificationsRoutes from "./routes/pushNotifications.route.js";
 import { app, server } from "./lib/socket.js";  
-import pushNotificationsRoutes from './routes/pushNotifications.route.js';
 
 dotenv.config();
 
 const PORT = process.env.PORT || 5001;
 const __dirname = path.resolve();
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://chatapp003.vercel.app",
-  "wss://chatapp003.vercel.app",
-  "https://fullstack-chat-4vla6v6q8-abhiyendru01s-projects.vercel.app",
-  "http://localhost:5001",
-  "ws://localhost:5001",
-  "https://stardust-chatapp-09.onrender.com",
-  "wss://stardust-chatapp-09.onrender.com",
-  "https://stardust-chatapp-production.up.railway.app",  
-  "wss://stardust-chatapp-production.up.railway.app",
-
-];
-
-
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
-app.get("/keep-alive", (req, res) => res.send("Server is alive"));
+app.use(compression());
 
+// ✅ Health check route
+app.get("/keep-alive", (req, res) => res.send("✅ Server is alive"));
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-    exposedHeaders: ["set-cookie"],
-  })
-);
-
+// ✅ Helmet for security
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: [
-          "'self'",
-          "'unsafe-inline'",
-          "localhost:5173",
-          "https://chatapp003.vercel.app",
-          "https://stardust-chatapp-09.onrender.com",
-          "https://fullstack-chat-4vla6v6q8-abhiyendru01s-projects.vercel.app",
-        ],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:"],
-        connectSrc: [
-          "'self'",
-          "http://localhost:5173",
-          "https://chatapp003.vercel.app",
-          "http://localhost:5001",
-          "ws://localhost:5001",
-          "https://stardust-chatapp-09.onrender.com",
-          "wss://stardust-chatapp-09.onrender.com",
-          "wss://stardust-chatapp-production.up.railway.app", 
-        ],
+        connectSrc: ["'self'", "wss://stardust-chatapp-09.onrender.com"], // ✅ WebSockets
         objectSrc: ["'none'"],
         frameSrc: ["'none'"],
       },
@@ -88,23 +43,23 @@ app.use(
   })
 );
 
-
-
+// ✅ API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/push", pushNotificationsRoutes);
 app.use("/api/calls", callRoutes);
-app.use(compression());
 
-
+// ✅ Serve Frontend in Production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
   app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
   });
 }
 
+// ✅ Start Server
 server.listen(PORT, () => {
   console.log(`🚀 Server is running on PORT: ${PORT}`);
   connectDB();

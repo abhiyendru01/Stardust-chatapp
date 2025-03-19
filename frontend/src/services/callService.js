@@ -1,16 +1,16 @@
 
+import { axiosInstance } from "../lib/axios";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL.startsWith("http")
-  ? import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")
-  : `https://${import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")}`;
+
+export const API_URL = "/"; // ✅ Use relative path since frontend & backend share the same domain
 
 export const fetchAgoraToken = async (channelName, uid) => {
   try {
-    const response = await fetch(`${API_URL}/api/calls/token`, {
+    const response = await fetch(`/api/calls/token`, { // ✅ Use relative path
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,  // ✅ Ensure Token is Sent
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`, // ✅ Ensure Token is Sent
       },
       body: JSON.stringify({ channelName, uid }),
     });
@@ -28,7 +28,7 @@ export const fetchAgoraToken = async (channelName, uid) => {
 
 export const saveCallLog = async (callData) => {
   try {
-    const response = await fetch(`${API_URL}/api/calls/log`, {
+    const response = await fetch(`/api/calls/log`, { // ✅ Use relative path
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -48,13 +48,11 @@ export const saveCallLog = async (callData) => {
   }
 };
 
-import { axiosInstance } from "../lib/axios";
-
 // ✅ Fetch Recent Calls
 export const fetchRecentCalls = async (userId) => {
   try {
     console.log(`🔗 Fetching recent calls for User: ${userId}`);
-    const response = await axiosInstance.get(`/calls/${userId}`);
+    const response = await axiosInstance.get(`/api/calls/${userId}`); // ✅ Use relative path
     console.log("✅ API Response (Recent Calls):", response.data); // Debugging
     return response.data.calls || [];
   } catch (error) {

@@ -1,10 +1,9 @@
 import { io } from "socket.io-client";
 import { useAuthStore } from "./store/useAuthStore";
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
-
 let socket = null;
 
+// ✅ Use relative URL (No need for VITE_BACKEND_URL)
 export const getSocket = () => {
   if (!socket) {
     const authUser = useAuthStore.getState().authUser;
@@ -14,23 +13,24 @@ export const getSocket = () => {
       return null;
     }
 
-    socket = io(backendUrl, {
+    // ✅ Connect using relative path (frontend & backend are on the same domain)
+    socket = io("/", {
+      transports: ["websocket", "polling"], 
       withCredentials: true,
-      transports: ["websocket"],
-      secure: backendUrl.startsWith("https"),
       path: "/socket.io/",
       query: { userId: authUser?._id },
-      reconnection: true,         // 🔥 Ensures it reconnects
-      reconnectionAttempts: 10,   // 🔥 Try 10 times
-      reconnectionDelay: 2000,    // 🔥 2-second delay before retrying
+      reconnection: true,         // 🔄 Ensures it reconnects
+      reconnectionAttempts: 10,   // 🔄 Try 10 times before stopping
+      reconnectionDelay: 2000,    // 🔄 2-second delay before retrying
     });
 
+    // ✅ WebSocket Event Listeners
     socket.on("connect", () => {
-      console.log(`✅ Connected to WebSocket server at ${backendUrl}`);
+      console.log(`✅ Connected to WebSocket`);
     });
 
     socket.on("disconnect", (reason) => {
-      console.log("🔴 Disconnected from WebSocket server:", reason);
+      console.log("🔴 Disconnected from WebSocket:", reason);
       setTimeout(() => {
         if (!socket.connected) {
           socket.connect();
@@ -39,12 +39,13 @@ export const getSocket = () => {
     });
 
     socket.on("connect_error", (error) => {
-      console.error("⚠️ Socket connection error:", error.message);
+      console.error("⚠️ WebSocket connection error:", error.message);
     });
   }
   return socket;
 };
 
+// ✅ Disconnect function (optional)
 export const disconnectSocket = () => {
   if (socket) {
     socket.disconnect();

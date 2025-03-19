@@ -1,5 +1,4 @@
 import { Server } from "socket.io";
-import admin from "firebase-admin";
 import http from "http";
 import express from "express";
 import User from "../models/user.model.js"; // User model for FCM token lookup
@@ -9,56 +8,42 @@ import Message from "../models/message.model.js";
 const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket.io server with CORS settings
+// ✅ Initialize WebSocket Server (No CORS Needed)
 const io = new Server(server, {
-  cors: {
-    origin: [
-      "http://localhost:5173",
-      "https://chatapp003.vercel.app",
-      "http://localhost:5001",
-      "https://stardust-chatapp-production.up.railway.app"
-    ],
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-  transports: ["websocket"],
-  allowEIO3: true,
+  transports: ["websocket", "polling"],
   path: "/socket.io/",
 });
 
-
 let userSocketMap = {}; // Store userId to socketId mapping
+
+// ✅ Save Messages to Database
 async function saveMessageToDB(senderId, receiverId, message) {
   try {
-      const newMessage = new Message({
-          senderId,
-          receiverId,
-          text: message.text,
-          createdAt: new Date(),
-      });
-      await newMessage.save();
-      console.log("✅ Message saved to DB");
+    const newMessage = new Message({
+      senderId,
+      receiverId,
+      text: message.text,
+      createdAt: new Date(),
+    });
+    await newMessage.save();
+    console.log("✅ Message saved to DB");
   } catch (error) {
-      console.error("❌ Error saving message:", error);
+    console.error("❌ Error saving message:", error);
   }
 }
 
-// ✅ Function to retrieve receiver's FCM token from DB
+// ✅ Retrieve Receiver's FCM Token
 async function getReceiverFCMToken(receiverId) {
   try {
     const user = await User.findById(receiverId);
-    if (!user || !user.fcmToken) {
-      console.warn(`⚠️ No FCM token found for User ${receiverId}`);
-      return null;
-    }
-    return user.fcmToken;
+    return user?.fcmToken || null;
   } catch (error) {
     console.error("❌ Error retrieving FCM token:", error);
     return null;
   }
 }
 
-// ✅ Function to get receiver's socket ID
+// ✅ Get Receiver's Socket ID
 export function getReceiverSocketId(receiverId) {
   return userSocketMap[receiverId] || null;
 }
@@ -67,31 +52,35 @@ io.on("connection", (socket) => {
   console.log(`✅ WebSocket Connected: ${socket.id}`);
 
   const userId = socket.handshake.query.userId;
-
   if (!userId) {
     console.error("❌ No userId provided, disconnecting socket.");
     socket.disconnect();
     return;
   }
 
-
   userSocketMap[userId] = socket.id;
   console.log(`🟢 User ${userId} is online.`);
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
-  socket.on("disconnect", (reason) => {
-    console.log(`🔴 User ${userId} disconnected. Reason: ${reason}`);
+  // ✅ Handle Disconnection
+  socket.on("disconnect", () => {
+    console.log(`🔴 User ${userId} disconnected.`);
     delete userSocketMap[userId];
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
+
   // 📞 Handle Incoming Calls
-  socket.on("call", ({ receiverId, callerId, callerName, callerProfile }) => {
+  socket.on("call", async ({ receiverId, callerId, callerName, callerProfile }) => {
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
       console.log(`📞 Sending call from ${callerId} to ${receiverId}`);
       io.to(receiverSocketId).emit("incomingCall", { callerId, callerName, callerProfile });
     } else {
       console.warn(`❌ User ${receiverId} is not online.`);
+      const fcmToken = await getReceiverFCMToken(receiverId);
+      if (fcmToken) {
+        sendPushNotification(receiverId, { senderId: callerId, senderName: callerName, senderProfile: callerProfile });
+      }
     }
   });
 
@@ -105,59 +94,29 @@ io.on("connection", (socket) => {
     const callerSocketId = getReceiverSocketId(callerId);
     if (callerSocketId) io.to(callerSocketId).emit("callRejected");
   });
-  socket.on("call", async ({ receiverId, callerId, callerName, callerProfile }) => {
-    const receiverSocketId = userSocketMap[receiverId];
-  
-    if (receiverSocketId) {
-      console.log(`📞 Sending call from ${callerId} to ${receiverId}`);
-      io.to(receiverSocketId).emit("incomingCall", { callerId, callerName, callerProfile });
-    } else {
-      console.warn(`❌ User ${receiverId} is not online.`);
-  
-      // ✅ Send Push Notification as a fallback
-      const fcmToken = await getReceiverFCMToken(receiverId);
-      if (fcmToken) {
-        sendPushNotification(receiverId, { senderId: callerId, senderName: callerName, senderProfile: callerProfile });
-      }
-    }
-  });
-  
-
 
   // ✉️ Handle Sending Messages
   socket.on("sendMessage", async ({ receiverId, message }) => {
     console.log(`📩 [SERVER] Received message from ${message.senderId} to ${receiverId}:`, message);
+    if (!message.senderId || !receiverId) return console.error("❌ Missing senderId or receiverId.");
 
-    const senderId = message.senderId;
-    if (!senderId || !receiverId) {
-        console.error("❌ [SERVER] Missing senderId or receiverId.");
-        return;
-    }
+    await saveMessageToDB(message.senderId, receiverId, message);
 
-    // ✅ Save message to DB before emitting
-    await saveMessageToDB(senderId, receiverId, message);
-
-    // ✅ Send message to receiver if online
+    // ✅ Emit Message in Real-time
     const receiverSocketId = userSocketMap[receiverId];
     if (receiverSocketId) {
-        console.log(`✅ [SERVER] Sending message to receiver: ${receiverSocketId}`);
-        io.to(receiverSocketId).emit("newMessage", message);
+      io.to(receiverSocketId).emit("newMessage", message);
     } else {
-        console.warn(`⚠️ [SERVER] Receiver ${receiverId} is offline. Sending push notification...`);
-        await sendPushNotification(receiverId, message);
+      await sendPushNotification(receiverId, message);
     }
 
-    // ✅ Send message back to sender
-    const senderSocketId = userSocketMap[senderId];
+    // ✅ Send Message Back to Sender
+    const senderSocketId = userSocketMap[message.senderId];
     if (senderSocketId) {
-        console.log(`✅ [SERVER] Sending message back to sender: ${senderSocketId}`);
-        io.to(senderSocketId).emit("newMessage", message);
+      io.to(senderSocketId).emit("newMessage", message);
     }
+  });
 });
 
-
-
-});
-
-// Export the app, server, and io
+// ✅ Export Server & WebSocket
 export { app, server, io };

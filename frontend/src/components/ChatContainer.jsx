@@ -10,7 +10,7 @@ import CallUI from "./CallUI"; // ✅ Import CallUI
 import { io } from "socket.io-client";
 import "./bubble.css";
 
-const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001');
+const socket = io("/"); // ✅ No need for backend URL
 
 const ChatContainer = () => {
   const {
@@ -38,48 +38,34 @@ const ChatContainer = () => {
       setCallStatus("Ringing...");
       setIsInCall(true);
     });
-  
+
     socket.on("callAccepted", () => {
       setCallStatus("In Call");
     });
-  
+
     socket.on("callEnded", () => {
       setIsInCall(false);
       setCaller(null);
       setCallStatus("");
     });
-  
+
     socket.on("newMessage", (message) => {
       console.log("📩 [FRONTEND] Received new message:", message);
-  
-      if (message.senderId === selectedUser?._id) {
+
+      if (message.senderId === selectedUser?._id || message.receiverId === selectedUser?._id) {
         setMessages((prevMessages) => [...prevMessages, message]); // 🔥 Append message
       }
     });
-  
+
     return () => {
       socket.off("incomingCall");
       socket.off("callAccepted");
       socket.off("callEnded");
       socket.off("newMessage");
     };
-  },[selectedUser?._id, setMessages]);
+  }, [selectedUser?._id, setMessages]);
 
-  // ✅ Handle Accept Call
-  const handleAcceptCall = () => {
-    socket.emit("answerCall", { senderId: caller });
-    setCallStatus("In Call");
-  };
-
-  // ✅ Handle End Call
-  const handleEndCall = () => {
-    socket.emit("endCall", { senderId: authUser._id, receiverId: caller });
-    setIsInCall(false);
-    setCaller(null);
-    setCallStatus("");
-  };
-
-  // ✅ Fetch messages
+  // ✅ Fetch messages when user is selected
   useEffect(() => {
     if (selectedUser?._id) {
       getMessages(selectedUser._id);
@@ -97,9 +83,8 @@ const ChatContainer = () => {
 
   // ✅ If in a call, show Call UI **FULLSCREEN**
   if (isInCall) {
-    return <CallUI caller={caller} callStatus={callStatus} onAcceptCall={handleAcceptCall} onEndCall={handleEndCall} />;
+    return <CallUI caller={caller} callStatus={callStatus} onAcceptCall={() => setCallStatus("In Call")} onEndCall={() => setIsInCall(false)} />;
   }
-  
 
   // ✅ Loading state
   if (isMessagesLoading) {
@@ -130,21 +115,13 @@ const ChatContainer = () => {
               <div className="chat-image avatar">
                 <div className="w-12 h-12 rounded-full border-2 border-primary">
                   <img
-                    src={
-                      message.senderId === authUser._id
-                        ? authUser.profilePic || "/avatar.png"
-                        : selectedUser.profilePic || "/avatar.png"
-                    }
+                    src={message.senderId === authUser._id ? authUser.profilePic || "/avatar.png" : selectedUser.profilePic || "/avatar.png"}
                     alt="profile pic"
                   />
                 </div>
               </div>
 
-              <div
-                className={`${
-                  message.senderId === authUser._id ? "bg-primary" : "bg-base-300/100"
-                } p-4 rounded-lg shadow-lg w-auto max-w-[75%] md:max-w-[60%]`}
-              >
+              <div className={`${message.senderId === authUser._id ? "bg-primary" : "bg-base-300/100"} p-4 rounded-lg shadow-lg w-auto max-w-[75%] md:max-w-[60%]`}>
                 {/* Text Messages */}
                 {message.text && (
                   <p className={`${message.senderId === authUser._id ? "text-primary-content" : "text-base-content"} break-words`}>
@@ -155,11 +132,7 @@ const ChatContainer = () => {
                 {/* Images with fixed size constraints */}
                 {message.image && (
                   <div className="overflow-hidden rounded-md shadow-md mt-3 max-w-full">
-                    <img
-                      src={message.image}
-                      alt="Attachment"
-                      className="w-full h-auto max-w-[250px] sm:max-w-[300px] md:max-w-[350px] lg:max-w-[400px] object-contain rounded-lg"
-                    />
+                    <img src={message.image} alt="Attachment" className="w-full h-auto max-w-[250px] sm:max-w-[300px] md:max-w-[350px] lg:max-w-[400px] object-contain rounded-lg" />
                   </div>
                 )}
 
@@ -184,7 +157,6 @@ const ChatContainer = () => {
       </div>
       <MessageInput />
     </div>
-    
   );
 };
 

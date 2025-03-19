@@ -4,7 +4,6 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import { requestForToken } from "../lib/firebase";
 
-const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -116,11 +115,13 @@ export const useAuthStore = create((set, get) => ({
   
     console.log("🔌 Connecting to WebSocket...");
   
-    const newSocket = io(BASE_URL, {
+    const newSocket = io("/", {
       withCredentials: true,
       transports: ["websocket", "polling"],
+      path: "/socket.io/",
       query: { userId: authUser._id },
     });
+    
   
     newSocket.on("connect", () => {
       console.log(`✅ Connected to WebSocket as ${authUser._id}`);

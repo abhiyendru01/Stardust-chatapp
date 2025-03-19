@@ -52,11 +52,20 @@ export const saveCallLog = async (callData) => {
 export const fetchRecentCalls = async (userId) => {
   try {
     console.log(`🔗 Fetching recent calls for User: ${userId}`);
-    const response = await axiosInstance.get(`/api/calls/${userId}`); // ✅ Use relative path
+    
+    // Debugging API URL
+    const response = await axiosInstance.get(`/api/calls/${userId}`);
+    
     console.log("✅ API Response (Recent Calls):", response.data); // Debugging
     return response.data.calls || [];
   } catch (error) {
     console.error("❌ Error fetching recent calls:", error);
+    
+    // Check if API returned anything
+    if (error.response) {
+      console.error("⚠️ API Error Response:", error.response.data);
+    }
+    
     return [];
   }
 };

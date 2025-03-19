@@ -31,17 +31,19 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://res.cloudinary.com"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        imgSrc: ["'self'", "data:"],
-        connectSrc: ["'self'", "wss://stardust-chatapp-09.onrender.com"], // ✅ WebSockets
+        imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],  // ✅ Allow images
+        connectSrc: ["'self'", "https://res.cloudinary.com" ,"https://stardust-chatapp-09.onrender.com"], // ✅ Allow fetch requests
+        mediaSrc: ["'self'", "https://res.cloudinary.com"], // ✅ Allow media (audio, video)
         objectSrc: ["'none'"],
         frameSrc: ["'none'"],
       },
     },
   })
 );
+
 
 // ✅ API Routes
 app.use("/api/auth", authRoutes);

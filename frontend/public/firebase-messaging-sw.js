@@ -29,5 +29,5 @@ messaging.onBackgroundMessage((payload) => {
 // ✅ Handle Notification Clicks
 self.addEventListener("notificationclick", (event) => {
     event.notification.close();
-    event.waitUntil(clients.openWindow("https://chatapp003.vercel.app"));
+    event.waitUntil(clients.openWindow("https://stardust-chatapp-09.onrender.com/"));
 });

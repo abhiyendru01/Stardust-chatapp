@@ -16,51 +16,45 @@ export const getUsersForSidebar = async (req, res) => {
       .sort({ lastMessagedAt: -1 })
       .lean();
 
-    console.log("✅ Users fetched:", users.length);
-
     // ✅ Fetch the latest message & unread count for each user
     for (let user of users) {
-      try {
-        const lastMessage = await Message.findOne({
-          $or: [
-            { senderId: loggedInUserId, receiverId: user._id },
-            { senderId: user._id, receiverId: loggedInUserId },
-          ],
-        })
-          .sort({ timestamp: -1 })
-          .select("text image audio timestamp senderId isRead");
+      const lastMessage = await Message.findOne({
+        $or: [
+          { senderId: loggedInUserId, receiverId: user._id },
+          { senderId: user._id, receiverId: loggedInUserId },
+        ],
+      })
+        .sort({ timestamp: -1 })
+        .select("text image audio timestamp senderId isRead");
 
-        // ✅ Count unread messages from this user
-        const unreadCount = await Message.countDocuments({
-          senderId: user._id,
-          receiverId: loggedInUserId,
-          isRead: false,
-        });
+      // ✅ Count unread messages from this user
+      const unreadCount = await Message.countDocuments({
+        senderId: user._id,
+        receiverId: loggedInUserId,
+        isRead: false,
+      });
 
-        // ✅ Determine last message type
-        let lastMessagePreview = "";
-        if (lastMessage) {
-          if (lastMessage.text) {
-            lastMessagePreview = lastMessage.text;
-          } else if (lastMessage.image) {
-            lastMessagePreview = "📷 Image";
-          } else if (lastMessage.audio) {
-            lastMessagePreview = "🎵 Voice Note";
-          }
+      // ✅ Determine last message type
+      let lastMessagePreview = "";
+      if (lastMessage) {
+        if (lastMessage.text) {
+          lastMessagePreview = lastMessage.text; // Show text message
+        } else if (lastMessage.image) {
+          lastMessagePreview = "📷 Image"; // Indicate it's an image
+        } else if (lastMessage.audio) {
+          lastMessagePreview = "🎵 Voice Note"; // Indicate it's an audio message
         }
-
-        user.lastMessage = lastMessagePreview;
-        user.lastMessageTime = lastMessage ? lastMessage.timestamp : null;
-        user.unreadCount = unreadCount;
-      } catch (innerError) {
-        console.error("❌ Error processing user messages:", innerError);
       }
+
+      user.lastMessage = lastMessagePreview;
+      user.lastMessageTime = lastMessage ? lastMessage.timestamp : null;
+      user.unreadCount = unreadCount;
     }
 
     res.status(200).json(users);
   } catch (error) {
-    console.error("❌ Error in getUsersForSidebar:", error);
-    res.status(500).json({ error: "Internal server error", details: error.message });
+    console.error("❌ Error in getUsersForSidebar:", error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 

@@ -35,8 +35,8 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],  // ✅ Allow images
-        connectSrc: ["'self'", "https://res.cloudinary.com" ,"https://stardust-chatapp-09.onrender.com"], // ✅ Allow fetch requests
-        mediaSrc: ["'self'", "https://res.cloudinary.com"], // ✅ Allow media (audio, video)
+        connectSrc: ["'self'", "https://res.cloudinary.com" ,"https://stardust-chatapp-09.onrender.com", "blob:"], // ✅ Allow fetch requests
+        mediaSrc: ["'self'", "https://res.cloudinary.com", "blob:"], // ✅ Allow media (audio, video)
         objectSrc: ["'none'"],
         frameSrc: ["'none'"],
       },

@@ -3,7 +3,6 @@ import { useAuthStore } from "./store/useAuthStore";
 
 let socket = null;
 
-// ✅ Use relative URL (No need for VITE_BACKEND_URL)
 export const getSocket = () => {
   if (!socket) {
     const authUser = useAuthStore.getState().authUser;
@@ -13,8 +12,12 @@ export const getSocket = () => {
       return null;
     }
 
-    // ✅ Connect using relative path (frontend & backend are on the same domain)
-    socket = io("/", {
+    // ✅ Determine Backend URL Based on Environment
+    const backendUrl =
+      import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
+
+    // ✅ Establish WebSocket Connection
+    socket = io(backendUrl, {
       transports: ["websocket", "polling"], 
       withCredentials: true,
       path: "/socket.io/",
@@ -26,7 +29,7 @@ export const getSocket = () => {
 
     // ✅ WebSocket Event Listeners
     socket.on("connect", () => {
-      console.log(`✅ Connected to WebSocket`);
+      console.log(`✅ Connected to WebSocket at ${backendUrl}`);
     });
 
     socket.on("disconnect", (reason) => {

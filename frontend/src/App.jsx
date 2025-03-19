@@ -15,11 +15,15 @@ import { io } from "socket.io-client";
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 
-const socket = io("/", {
+const backendUrl =
+  import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
+
+const socket = io(backendUrl, {
   transports: ["websocket", "polling"],
   withCredentials: true,
   path: "/socket.io/",
 });
+
 
 
 const App = () => {

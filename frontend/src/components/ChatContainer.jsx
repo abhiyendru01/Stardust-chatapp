@@ -6,11 +6,11 @@ import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import AudioMessage from "./AudioMessage";
-import CallUI from "./CallUI"; // ✅ Import CallUI
+import CallUI from "./CallUI"; 
 import { io } from "socket.io-client";
 import "./bubble.css";
 
-const socket = io("/"); // ✅ No need for backend URL
+const socket = io("/"); 
 
 const ChatContainer = () => {
   const {
@@ -53,7 +53,7 @@ const ChatContainer = () => {
       console.log("📩 [FRONTEND] Received new message:", message);
 
       if (message.senderId === selectedUser?._id || message.receiverId === selectedUser?._id) {
-        setMessages((prevMessages) => [...prevMessages, message]); // 🔥 Append message
+        setMessages((prevMessages) => [...prevMessages, message]); 
       }
     });
 

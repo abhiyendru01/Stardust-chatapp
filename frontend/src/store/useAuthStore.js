@@ -4,7 +4,6 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import { requestForToken } from "../lib/firebase";
 
-
 export const useAuthStore = create((set, get) => ({
   authUser: null,
   isSigningUp: false,
@@ -143,9 +142,6 @@ export const useAuthStore = create((set, get) => ({
   
     set({ socket: newSocket });
   },
-  
-
-  // Disconnect the socket when the user logs out or disconnects
   disconnectSocket: () => {
     if (get().socket?.connected) get().socket.disconnect();
   },

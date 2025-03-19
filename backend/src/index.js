@@ -22,10 +22,24 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
 app.use(compression());
 
+// ✅ Manually Handle CORS Without `cors` Package (For iOS Safari)
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
+
 // ✅ Health check route
 app.get("/keep-alive", (req, res) => res.send("✅ Server is alive"));
 
-// ✅ Helmet for security
+// ✅ Helmet for security (Enhanced Content Security Policy)
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -35,7 +49,14 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],  // ✅ Allow images
-        connectSrc: ["'self'", "https://res.cloudinary.com" ,"https://stardust-chatapp-09.onrender.com", "blob:"], // ✅ Allow fetch requests
+        connectSrc: [
+          "'self'",
+          "https://res.cloudinary.com",
+          "https://stardust-chatapp-09.onrender.com",
+          "blob:",
+          "ws://stardust-chatapp-09.onrender.com",
+          "wss://stardust-chatapp-09.onrender.com",
+        ], // ✅ Allow fetch requests & WebSockets
         mediaSrc: ["'self'", "https://res.cloudinary.com", "blob:"], // ✅ Allow media (audio, video)
         objectSrc: ["'none'"],
         frameSrc: ["'none'"],
@@ -43,7 +64,6 @@ app.use(
     },
   })
 );
-
 
 // ✅ API Routes
 app.use("/api/auth", authRoutes);

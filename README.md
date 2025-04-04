@@ -1,42 +1,48 @@
+# Stardust Chat App – Realtime Messaging with AI & Theme Support
 
-chat app using MERN
-created by rahul
-live demo:- https://chatapp003.vercel.app
-=======
-Highlights:
+A full-stack chat application built using the MERN stack with a focus on real-time communication, practical design, and scalability. This app supports PWA capabilities, customizable themes via DaisyUI, and includes profession-based AI assistants to extend functionality beyond casual chatting.
 
-- Tech stack: MERN + Socket.io + TailwindCSS + Daisy UI
-- Authentication && Authorization with JWT
-- Real-time messaging with Socket.io
-- Online user status
-- Global state management with Zustand
-- Error handling both on the server and on the client
-  At the end Deployment like a pro for FREE!
-- And much more!
+---
 
-### Setup .env file
+## Features
 
-```js
-MONGODB_URI=...
-PORT=5001
-JWT_SECRET=...
+- **User Authentication** (JWT-based login/signup)
+- **Direct and Group Messaging**
+- **Real-Time Chat** powered by Socket.IO
+- **AI Chat Assistants** tailored to specific domains:
+  - Doctor
+  - Lawyer
+  - Chartered Accountant (CA)
+- **Theme Support** using DaisyUI (light, dark, cyberpunk, and more)
+- **PWA Support** – installable on mobile/desktop
+- **Media Sharing** – images, files
+- **Seen/Delivered Indicators**
+- **Online/Offline Status**
+- **Edit/Delete Messages**
+- **Responsive Search for Users & Conversations**
+- **Fully Responsive Layout**
+- **Dark/Light Mode Toggle**
 
-CLOUDINARY_CLOUD_NAME=...
-CLOUDINARY_API_KEY=...
-CLOUDINARY_API_SECRET=...
+---
 
-NODE_ENV=development
-```
+## Tech Stack
 
-### Build the app
+### Frontend
+- Vite.js
+- Redux Toolkit
+- Tailwind CSS + DaisyUI
+- Socket.IO Client
+- React Router
+- PWA Setup (Service Worker + Manifest)
 
-```shell
-npm run build
-```
+### Backend
+- Node.js
+- Express.js
+- MongoDB with Mongoose
+- Socket.IO Server
+- WebRTC for real time voice/video calling 
+- JSON Web Tokens for auth
+- Multer + Cloudinary for media handling
+- OpenAI integration for AI chats
 
-### Start the app
-
-```shell
-npm start
-```
->>>>>>> 9374956b8ce18f442cf22d142528612689509688
+---

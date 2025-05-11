@@ -34,7 +34,7 @@ const App = () => {
   const [incomingCall, setIncomingCall] = useState(null);
   const [callStatus, setCallStatus] = useState("");
 
-  const ringtoneRef = useRef(null); // 🔊 Reference for ringtone
+  const ringtoneRef = useRef(null); 
 
   useEffect(() => {
     checkAuth();
@@ -45,7 +45,7 @@ const App = () => {
       console.log("📞 Incoming call:", data);
       setIncomingCall(data);
       setCallStatus("Incoming Call...");
-      ringtoneRef.current.play(); // 🔊 Play ringtone when call arrives
+      ringtoneRef.current.play(); 
     });
 
     socket.on("callEnded", () => {

@@ -36,7 +36,7 @@ const Footer = () => {
         {/* 3️⃣ AI Tab */}
           <Link to="/ai" className="relative w-1/5 h-24 -mt-4 flex items-center justify-center">
             <div className="relative flex items-center justify-center">
-              <div className="w-20 h-20 rounded-full border-2 border-primary/20 bg-gradient-to-r from-secondary/40 to-primary/50 shadow-xl backdrop-blur-3xl z-index-20">
+              <div className="w-20 h-20 rounded-full border-2 border-primary/20 bg-gradient-to-r from-secondary/40 to-primary/50 shadow-xl backdrop-blur-md z-index-20">
                 
                 {/* Inner Glow */}
                 <div className="absolute inset-0 rounded-full bg-secondary/40 opacity-50 blur-md"></div>

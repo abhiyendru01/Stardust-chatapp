@@ -7,6 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
 import CallUI from "./components/CallUI";
+import AIChatPage from "./pages/Ai-Chat"; // Import your AI Chat Page
 import RecentCalls from "./pages/RecentCalls";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore";
@@ -123,20 +124,14 @@ const App = () => {
           <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
           <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
-          <Route
-            path="/settings"
-            element={
-              <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} transition={{ duration: 0.5 }}>
-                <SettingsPage />
-              </motion.div>
-            }
-          />
+          <Route path="/settings" element={<SettingsPage /> }/>
           <Route path="/calls" element={<RecentCalls />} />
-          <Route
-            path="/profile"
+          <Route path="/profile" element={ <ProfilePage />}/>
+        <Route
+            path="/ai"
             element={
               <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} transition={{ duration: 0.3 }}>
-                <ProfilePage />
+                <AIChatPage />
               </motion.div>
             }
           />

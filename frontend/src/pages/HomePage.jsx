@@ -10,7 +10,6 @@ const HomePage = () => {
   const { selectedUser } = useChatStore();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Detect screen size changes
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);

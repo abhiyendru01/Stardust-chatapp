@@ -15,50 +15,197 @@ const Footer = () => {
   };
 
   return (
-    <div className="flex justify-center items-center relative w-full h-20">
-      <div className="relative border-t border-primary/70 w-full rounded-t-2xl flex shadow-lg bg-primary/10 backdrop-blur-md z-index-8 ">
+    <div className="fixed bottom-0 left-0 w-full flex justify-center items-center z-20">
+      <div
+        className="
+          relative
+          w-full
+          max-w-[1200px]
+          h-16
+          sm:h-20
+          bg-primary/5
+          backdrop-blur-lg
+          border-t
+          border-primary/60
+          rounded-t-2xl
+          shadow-xl
+          flex
+          items-center
+          justify-between
+          mx-2
+          sm:mx-4
+          pb-[env(safe-area-inset-bottom)]
+          box-border
+        "
+      >
         {/* Active Tab Indicator */}
         <motion.div
-          className="absolute top-0 left-0 w-1/5 h-full bg-primary/20 border border-primary/20 rounded-2xl"
+          className="
+            absolute
+            top-0
+            left-0
+            w-1/5
+            h-full
+            bg-gradient-to-r
+            from-primary/20
+            to-secondary/30
+            border
+            border-primary/30
+            rounded-2xl
+            shadow-md
+          "
           animate={{ left: getActiveTabPosition() }}
-          transition={{ type: "spring", stiffness: 120, damping: 12 }}
+          transition={{ type: "spring", stiffness: 150, damping: 15 }}
         />
-        {/* 1️⃣ Settings Tab */}
-        <Link to="/settings" className="relative w-1/5 h-20 flex items-center justify-center">
-          <Settings className="w-6 h-6 text-secndary-content/70" />
+
+        {/* Settings Tab */}
+        <Link
+          to="/settings"
+          className="relative w-1/5 h-full flex items-center justify-center"
+        >
+          <Settings
+            className="
+              w-5
+              h-5
+              sm:w-6
+              sm:h-6
+              text-base-content/80
+              hover:text-primary
+              transition-all
+              duration-300
+            "
+          />
         </Link>
 
-        {/* 2️⃣ Chat/Home Tab */}
-        <Link to="/" className="relative w-1/5 h-20 flex items-center justify-center">
-          <MessageSquare className="w-6 h-6 text-secndary-content/70" />
+        {/* Chat/Home Tab */}
+        <Link
+          to="/"
+          className="relative w-1/5 h-full flex items-center justify-center"
+        >
+          <MessageSquare
+            className="
+              w-5
+              h-5
+              sm:w-6
+              sm:h-6
+              text-base-content/80
+              hover:text-primary
+              transition-all
+              duration-300
+            "
+          />
         </Link>
 
-        {/* 3️⃣ AI Tab */}
-          <Link to="/ai" className="relative w-1/5 h-24 -mt-4 flex items-center justify-center">
-            <div className="relative flex items-center justify-center">
-              <div className="w-20 h-20 rounded-full border-2 border-primary/20 bg-gradient-to-r from-secondary/40 to-primary/50 shadow-xl backdrop-blur-md z-index-20">
-                
-                {/* Inner Glow */}
-                <div className="absolute inset-0 rounded-full bg-secondary/40 opacity-50 blur-md"></div>
-                {/* Bot Icon */}
-                <div className="absolute inset-0 flex items-center justify-center">
-            <Bot className="w-7 h-7 text-secndary-content/90" />
-                </div>
+        {/* AI/Bot Highlighted Tab */}
+        <Link
+          to="/ai"
+          className="
+            relative
+            w-1/5
+            h-full
+            flex
+            items-center
+            justify-center
+            -mt-4
+            sm:-mt-6
+          "
+        >
+          <div className="relative flex items-center justify-center">
+            <div
+              className="
+                w-[14vw]
+                h-[14vw]
+                max-w-16
+                max-h-16
+                sm:w-[12vw]
+                sm:h-[12vw]
+                sm:max-w-20
+                sm:max-h-20
+                rounded-full
+                border-4
+                border-secondary
+                shadow-2xl
+                bg-gradient-to-r
+                from-secondary
+                to-primary/50
+              "
+            >
+              {/* Inner Glow */}
+              <div
+                className="
+                  absolute
+                  inset-0
+                  rounded-full
+                  bg-secondary/30
+                  opacity-60
+                  blur-md
+                "
+              ></div>
+              {/* Bot Icon */}
+              <div
+                className="
+                  absolute
+                  inset-0
+                  flex
+                  items-center
+                  justify-center
+                "
+              >
+                <Bot
+                  className="
+                    w-6
+                    h-6
+                    sm:w-8
+                    sm:h-8
+                    text-base-content/80
+                    drop-shadow-md
+                  "
+                />
               </div>
             </div>
-          </Link>
-
-          {/* 4️⃣ Recent Calls Tab */}
-        <Link to="/calls" className="relative w-1/5 h-20 flex items-center justify-center">
-          <Phone className="w-6 h-6 text-secndary-content/70" />
+          </div>
         </Link>
 
-        {/* 5️⃣ Profile Tab */}
-        <Link to="/profile" className="relative w-1/5 h-20 flex items-center justify-center">
-          <User className="w-6 h-6 text-secndary-content/70" />
+        {/* Calls Tab */}
+        <Link
+          to="/calls"
+          className="relative w-1/5 h-full flex items-center justify-center"
+        >
+          <Phone
+            className="
+              w-5
+              h-5
+              sm:w-6
+              sm:h-6
+              text-base-content/80
+              hover:text-primary
+              transition-all
+              duration-300
+            "
+          />
+        </Link>
+
+        {/* Profile Tab */}
+        <Link
+          to="/profile"
+          className="relative w-1/5 h-full flex items-center justify-center"
+        >
+          <User
+            className="
+              w-5
+              h-5
+              sm:w-6
+              sm:h-6
+              text-base-content/80
+              hover:text-primary
+              transition-all
+              duration-300
+            "
+          />
         </Link>
       </div>
     </div>
   );
 };
+
 export default Footer;

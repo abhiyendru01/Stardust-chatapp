@@ -101,7 +101,6 @@ const RecentCalls = () => {
                   </div>
                 </div>
 
-                {/* ✅ Call Time & Icon */}
                 <div className="text-xs text-gray-400 flex items-center gap-2">
                   {call.timestamp ? new Date(call.timestamp).toLocaleTimeString() : "N/A"}
                   {call.status === "missed" ? (

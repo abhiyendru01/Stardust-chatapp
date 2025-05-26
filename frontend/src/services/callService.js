@@ -2,7 +2,7 @@
 import { axiosInstance } from "../lib/axios";
 
 
-export const API_URL = "/"; // ✅ Use relative path since frontend & backend share the same domain
+export const API_URL = "/"; 
 
 export const fetchAgoraToken = async (channelName, uid) => {
   try {

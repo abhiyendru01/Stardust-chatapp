@@ -18,6 +18,5 @@ router.post("/accept-request", protectRoute, acceptFriendRequest);
 router.post("/reject-request", protectRoute, rejectFriendRequest);
 router.get("/friends", protectRoute, getFriendList);
 router.get("/friend-requests", protectRoute, getFriendRequests);
-router.get("/search", protectRoute, searchUsers);
-
+router.post("/search-users", protectRoute, searchUsers);
 export default router;

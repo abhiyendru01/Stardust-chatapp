@@ -1,150 +1,100 @@
-import User from "../models/user.model.js";
+import Friend from '../models/friend.model.js';
+import User from '../models/user.model.js';
 
-/** 
- * @desc Send a friend request 
- * @route POST /api/friends/send-request
- * @access Private
- */
 export const sendFriendRequest = async (req, res) => {
+  const { receiverId } = req.body;
+  const senderId = req.user._id;
+
+  if (senderId === receiverId) {
+    return res.status(400).json({ message: "You can't send a request to yourself" });
+  }
+
   try {
-    const senderId = req.user._id;
-    const { receiverId } = req.body;
+    const existingRequest = await Friend.findOne({
+      sender: senderId,
+      receiver: receiverId,
+    });
 
-    if (senderId.toString() === receiverId.toString()) {
-      return res.status(400).json({ message: "You cannot send a friend request to yourself." });
+    if (existingRequest) {
+      return res.status(400).json({ message: 'Friend request already sent or received' });
     }
 
-    const receiver = await User.findById(receiverId);
-    if (!receiver) {
-      return res.status(404).json({ message: "User not found." });
-    }
+    const newRequest = new Friend({
+      sender: senderId,
+      receiver: receiverId,
+    });
 
-    if (receiver.friendRequests.includes(senderId)) {
-      return res.status(400).json({ message: "Friend request already sent." });
-    }
+    await newRequest.save();
 
-    if (receiver.friends.includes(senderId)) {
-      return res.status(400).json({ message: "You are already friends with this user." });
-    }
-
-    // Add sender ID to receiver's friend requests
-    receiver.friendRequests.push(senderId);
-    await receiver.save();
-
-    res.status(200).json({ message: "Friend request sent successfully!" });
+    res.status(200).json({ message: 'Friend request sent' });
   } catch (error) {
-    console.error("Error in sendFriendRequest:", error);
-    res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: 'Error sending friend request' });
   }
 };
 
-/** 
- * @desc Accept a friend request
- * @route POST /api/friends/accept-request
- * @access Private
- */
-export const acceptFriendRequest = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { senderId } = req.body;
+export const getReceivedRequests = async (req, res) => {
+  const userId = req.user._id;
 
-    const user = await User.findById(userId);
+  try {
+    const requests = await Friend.find({ receiver: userId, status: 'pending' })
+      .populate('sender', 'fullName profilePic email')
+      .exec();
+
+    res.status(200).json(requests);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching friend requests' });
+  }
+};
+
+export const acceptFriendRequest = async (req, res) => {
+  const { senderId } = req.body;
+  const receiverId = req.user._id;
+
+  try {
+    const request = await Friend.findOneAndUpdate(
+      { sender: senderId, receiver: receiverId, status: 'pending' },
+      { status: 'accepted' },
+      { new: true }
+    );
+
+    if (!request) {
+      return res.status(400).json({ message: 'Friend request not found' });
+    }
+
+    // Add the sender to the receiver's friend list and vice versa
+    const user = await User.findById(receiverId);
     const sender = await User.findById(senderId);
 
-    if (!user || !sender) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    if (!user.friendRequests.includes(senderId)) {
-      return res.status(400).json({ message: "No pending friend request from this user." });
-    }
-
-    // Remove sender from friend requests and add to friends list
-    user.friendRequests = user.friendRequests.filter(id => id.toString() !== senderId);
     user.friends.push(senderId);
-    sender.friends.push(userId);
+    sender.friends.push(receiverId);
 
     await user.save();
     await sender.save();
 
-    res.status(200).json({ message: "Friend request accepted!" });
+    res.status(200).json({ message: 'Friend request accepted' });
   } catch (error) {
-    console.error("Error in acceptFriendRequest:", error);
-    res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: 'Error accepting friend request' });
   }
 };
 
-/** 
- * @desc Reject a friend request
- * @route POST /api/friends/reject-request
- * @access Private
- */
 export const rejectFriendRequest = async (req, res) => {
+  const { senderId } = req.body;
+  const receiverId = req.user._id;
+
   try {
-    const userId = req.user._id;
-    const { senderId } = req.body;
+    const request = await Friend.findOneAndUpdate(
+      { sender: senderId, receiver: receiverId, status: 'pending' },
+      { status: 'rejected' },
+      { new: true }
+    );
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
+    if (!request) {
+      return res.status(400).json({ message: 'Friend request not found' });
     }
 
-    if (!user.friendRequests.includes(senderId)) {
-      return res.status(400).json({ message: "No pending friend request from this user." });
-    }
-
-    // Remove sender from friend requests
-    user.friendRequests = user.friendRequests.filter(id => id.toString() !== senderId);
-    await user.save();
-
-    res.status(200).json({ message: "Friend request rejected!" });
+    res.status(200).json({ message: 'Friend request rejected' });
   } catch (error) {
-    console.error("Error in rejectFriendRequest:", error);
-    res.status(500).json({ message: "Internal server error." });
-  }
-};
-
-/** 
- * @desc Get list of friends
- * @route GET /api/friends/friends
- * @access Private
- */
-export const getFriendList = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const user = await User.findById(userId).populate("friends", "fullName email profilePic");
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    console.log("getFriendList API response:", user.friends); // Debugging
-
-    res.status(200).json(user.friends); // Must return an array
-  } catch (error) {
-    console.error("Error in getFriendList:", error);
-    res.status(500).json({ message: "Internal server error." });
-  }
-};
-
-/** 
- * @desc Get list of pending friend requests
- * @route GET /api/friends/friend-requests
- * @access Private
- */
-export const getFriendRequests = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const user = await User.findById(userId).populate("friendRequests", "fullName email profilePic");
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    res.status(200).json(user.friendRequests);
-  } catch (error) {
-    console.error("Error in getFriendRequests:", error);
-    res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: 'Error rejecting friend request' });
   }
 };
 
@@ -154,19 +104,19 @@ export const getFriendRequests = async (req, res) => {
  * @access Private
  */
 export const searchUsers = async (req, res) => {
+  const { query } = req.body;
+
   try {
-    const { query } = req.query;
-    if (!query) {
-      return res.status(400).json({ message: "Query is required." });
-    }
-
+    // Search for users by full name or email
     const users = await User.find({
-      fullName: { $regex: query, $options: "i" }
-    }).select("fullName email profilePic");
+      $and: [
+        { fullName: { $regex: query, $options: "i" } }, // Case-insensitive search
+        { _id: { $ne: req.user._id } }, // Exclude logged-in user
+      ]
+    }).select('fullName email profilePic');  // Adjust fields as per your needs
 
-    res.status(200).json(users);
+    res.status(200).json(users);  // Send the users as a response
   } catch (error) {
-    console.error("Error in searchUsers:", error);
-    res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: "Error searching for users" });
   }
 };

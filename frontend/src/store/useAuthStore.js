@@ -73,12 +73,12 @@ export const useAuthStore = create((set, get) => ({
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
-      localStorage.removeItem("authToken"); // ✅ Clear token
+      localStorage.removeItem("authToken"); 
       set({ authUser: null });
-      get().disconnectSocket();  // Disconnect socket
+      get().disconnectSocket();
       toast.success("Logged out successfully");
 
-      window.location.href = "/login"; // ✅ Force reload and redirect to login
+      window.location.href = "/login";
     } catch (error) {
       toast.error(error.response?.data?.message || "Logout failed");
     }
@@ -95,7 +95,6 @@ export const useAuthStore = create((set, get) => ({
   } catch (error) {
     console.log("Error in update profile:", error);
 
-    // Check if error.response exists before accessing data.message
     if (error.response && error.response.data) {
       toast.error(error.response.data.message);
     } else {
@@ -106,8 +105,6 @@ export const useAuthStore = create((set, get) => ({
   }
 },
 
-
-  // Socket.io connection to handle real-time features
   connectSocket: () => {
     const { authUser, socket } = get();
     if (!authUser || (socket && socket.connected)) return;

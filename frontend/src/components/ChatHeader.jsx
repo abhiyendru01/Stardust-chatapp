@@ -21,11 +21,10 @@ const ChatHeader = () => {
   const ringingRef = useRef(null);
   const incomingRingtoneRef = useRef(null);
 
-  // ✅ Fetch Agora Token
   const fetchAgoraToken = async () => {
     if (!selectedUser?._id) return;
     try {
-      const response = await fetch(`/api/calls/token`, { // ✅ Use relative path
+      const response = await fetch(`/api/calls/token`, { 
         method: "POST",
         headers: {
           "Content-Type": "application/json",

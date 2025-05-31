@@ -23,7 +23,7 @@ const callSchema = new mongoose.Schema(
       required: true,
     },
     duration: {
-      type: Number, // Call duration in seconds
+      type: Number, 
       default: 0,
     },
     timestamp: {

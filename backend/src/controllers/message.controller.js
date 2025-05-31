@@ -10,13 +10,11 @@ export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
 
-    // ✅ Fetch users excluding the logged-in user
     let users = await User.find({ _id: { $ne: loggedInUserId } })
       .select("fullName email profilePic lastMessagedAt")
       .sort({ lastMessagedAt: -1 })
       .lean();
 
-    // ✅ Fetch the latest message & unread count for each user
     for (let user of users) {
       const lastMessage = await Message.findOne({
         $or: [
@@ -27,22 +25,20 @@ export const getUsersForSidebar = async (req, res) => {
         .sort({ timestamp: -1 })
         .select("text image audio timestamp senderId isRead");
 
-      // ✅ Count unread messages from this user
       const unreadCount = await Message.countDocuments({
         senderId: user._id,
         receiverId: loggedInUserId,
         isRead: false,
       });
 
-      // ✅ Determine last message type
       let lastMessagePreview = "";
       if (lastMessage) {
         if (lastMessage.text) {
-          lastMessagePreview = lastMessage.text; // Show text message
+          lastMessagePreview = lastMessage.text;
         } else if (lastMessage.image) {
-          lastMessagePreview = "📷 Image"; // Indicate it's an image
+          lastMessagePreview = "📷 Image"; 
         } else if (lastMessage.audio) {
-          lastMessagePreview = "🎵 Voice Note"; // Indicate it's an audio message
+          lastMessagePreview = "🎵 Voice Note"; 
         }
       }
 
@@ -73,9 +69,9 @@ export const uploadAudio = async (req, res) => {
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         {
-          resource_type: "video", // ✅ Cloudinary treats audio as "video"
+          resource_type: "video", 
           folder: "audio-messages",
-          format: "mp3", // ✅ Convert to MP3 for better compatibility
+          format: "mp3", 
         },
         (error, result) => {
           if (error) {

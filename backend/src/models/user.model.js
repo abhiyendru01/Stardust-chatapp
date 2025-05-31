@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     }],
-    lastMessagedAt: { // ✅ Added this field
+    lastMessagedAt: { 
       type: Date,
       default: null,
     },

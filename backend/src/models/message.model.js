@@ -26,7 +26,7 @@ const messageSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    isRead: { // ✅ New field to track unread messages
+    isRead: { 
       type: Boolean,
       default: false,
     },

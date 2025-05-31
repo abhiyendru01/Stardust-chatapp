@@ -70,7 +70,7 @@ export const getRecentCalls = async (req, res) => {
       .populate("receiver", "fullName profilePic")
       .sort({ timestamp: -1 });
 
-    console.log("✅ Calls found in DB:", calls.length); // ✅ Log count of calls
+    console.log("✅ Calls found in DB:", calls.length); 
 
     if (!calls.length) {
       return res.status(200).json({ message: "No recent calls", calls: [] });

@@ -77,7 +77,6 @@ const updateThemeColors = (theme) => {
   console.log("🔄 Theme Updated:", theme, " | Theme-Color:", themeColor);
 };
 
-// ✅ Zustand Store for Managing Theme
 export const useThemeStore = create((set) => ({
   theme: localStorage.getItem("chat-theme") || "wireframe",
 

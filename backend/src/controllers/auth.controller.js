@@ -62,14 +62,14 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user._id, res); // Generate JWT and optionally set in cookie
+    const token = generateToken(user._id, res); 
 
     res.status(200).json({
       _id: user._id,
       fullName: user.fullName,
       email: user.email,
       profilePic: user.profilePic,
-      token, // Send JWT token in response
+      token, 
     });
   } catch (error) {
     console.error("Error in login controller", error.message);
@@ -91,8 +91,8 @@ export const logout = (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { profilePic, fullName } = req.body; // Get profile data
-    const userId = req.user._id; // Get the current user's ID
+    const { profilePic, fullName } = req.body;
+    const userId = req.user._id; 
 
     let uploadedImageUrl = null;
 
@@ -104,13 +104,11 @@ export const updateProfile = async (req, res) => {
 
       uploadedImageUrl = uploadResponse.secure_url;
     }
-
-    // Update the user in MongoDB
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        fullName: fullName || "", // Update name if provided
-        profilePic: uploadedImageUrl || undefined, // Only update if a new image was uploaded
+        fullName: fullName || "",
+        profilePic: uploadedImageUrl || undefined, 
       },
       { new: true }
     );
@@ -139,6 +137,99 @@ export const checkAuth = (req, res) => {
   } catch (error) {
     console.error("Error in checkAuth controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getFriends = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId).populate("friends", "fullName profilePic email");
+    res.status(200).json(user.friends);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching friends" });
+  }
+};
+
+// Search for users (exclude the logged-in user)
+export const searchUsers = async (req, res) => {
+  const { query } = req.body; // search query (username or email)
+  try {
+    const users = await User.find({
+      $and: [
+        { fullName: { $regex: query, $options: "i" } }, // case-insensitive search
+        { _id: { $ne: req.user._id } }, // exclude the logged-in user
+        ]
+      }).select("fullName profilePic email");
+
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Error searching for users" });
+  }
+};
+
+// Send a friend request
+export const sendFriendRequest = async (req, res) => {
+  const { receiverId } = req.body;
+  const senderId = req.user._id;
+
+  try {
+    const sender = await User.findById(senderId);
+    const receiver = await User.findById(receiverId);
+
+    if (sender.friendRequests.includes(receiverId)) {
+      return res.status(400).json({ message: "Friend request already sent" });
+    }
+
+    sender.friendRequests.push(receiverId);
+    await sender.save();
+    res.status(200).json({ message: "Friend request sent" });
+  } catch (error) {
+    res.status(500).json({ message: "Error sending friend request" });
+  }
+};
+
+// Accept a friend request
+export const acceptFriendRequest = async (req, res) => {
+  const { senderId } = req.body;
+  const receiverId = req.user._id;
+
+  try {
+    const sender = await User.findById(senderId);
+    const receiver = await User.findById(receiverId);
+
+    // Add each other as friends
+    receiver.friends.push(senderId);
+    sender.friends.push(receiverId);
+
+    // Remove the friend request
+    receiver.friendRequests = receiver.friendRequests.filter(
+      (id) => id.toString() !== senderId
+    );
+
+    await receiver.save();
+    await sender.save();
+
+    res.status(200).json({ message: "Friend request accepted" });
+  } catch (error) {
+    res.status(500).json({ message: "Error accepting friend request" });
+  }
+};
+
+// Reject a friend request
+export const rejectFriendRequest = async (req, res) => {
+  const { senderId } = req.body;
+  const receiverId = req.user._id;
+
+  try {
+    const receiver = await User.findById(receiverId);
+    receiver.friendRequests = receiver.friendRequests.filter(
+      (id) => id.toString() !== senderId
+    );
+
+    await receiver.save();
+    res.status(200).json({ message: "Friend request rejected" });
+  } catch (error) {
+    res.status(500).json({ message: "Error rejecting friend request" });
   }
 };
 

@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
+import webpush from "web-push";
 import cloudinary from "../lib/cloudinary.js";
 import multer from "multer";
 import { getReceiverSocketId, io } from "../lib/socket.js";
@@ -193,13 +194,36 @@ export const sendMessage = async (req, res) => {
       io.to(senderSocketId).emit("newMessage", newMessage);
     }
 
+    // ✅ Push Notification Logic
+    const receiver = await User.findById(receiverId); // Retrieve the receiver from the database
+    if (receiver?.pushNotificationSubscription) {
+      const subscription = receiver.pushNotificationSubscription; // Get push notification subscription
+    
+      const sender = await User.findById(senderId); // Retrieve the sender's information
+    
+      const messageContent = {
+        title: sender.fullName, // Sender's full name as the notification title
+        body: text || 'You have received a new message!', // Message content
+        icon: sender.profilePic || '/avatar.png', // Sender's profile pic as the notification icon
+        url: `/messages/${senderId}`,
+      };
+    
+      // Sending push notification
+      try {
+        await webpush.sendNotification(subscription, JSON.stringify(messageContent));
+        console.log("✅ Push Notification sent!");
+      } catch (error) {
+        console.error("❌ Error sending push notification:", error);
+      }
+    }
+    
+
     res.status(201).json(newMessage);
   } catch (error) {
     console.log("❌ Error in sendMessage controller:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 export const deleteMessage = async (req, res) => {
   const { messageId } = req.params;
 

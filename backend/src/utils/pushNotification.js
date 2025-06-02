@@ -16,7 +16,7 @@ export const sendPushNotification = (subscription, message) => {
   const payload = JSON.stringify({
     title: 'New Message!',
     body: message,
-    icon: '/stardust_appicon.png',  // Replace with your own icon URL if needed
+    icon: '/weave.png',  // Replace with your own icon URL if needed
     url: '/chat',  // Link to the chat page, this will open when the user clicks the notification
   });
 

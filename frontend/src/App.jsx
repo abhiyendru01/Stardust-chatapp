@@ -80,16 +80,42 @@ const App = () => {
       ringtoneRef.current.currentTime = 0;
     }
   };
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker
-      .register("/firebase-messaging-sw.js")
-      .then((registration) => {
-        console.log("✅ Service Worker Registered:", registration);
-      })
-      .catch((error) => {
-        console.error("❌ Service Worker Registration Failed:", error);
+  if ('serviceWorker' in navigator && 'PushManager' in window) {
+    navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+      console.log('Service Worker registered:', registration);
+      
+      // Check for Push notification permission
+      Notification.requestPermission().then(function(permission) {
+        if (permission === 'granted') {
+          console.log('Notification permission granted.');
+  
+          // Get the push subscription
+          registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: 'YOUR_VAPID_PUBLIC_KEY'
+          }).then(function(subscription) {
+            console.log('Push subscription:', subscription);
+            
+            // Send the subscription to the server
+            fetch('/api/subscribe', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ subscription })
+            });
+          }).catch(function(error) {
+            console.error('Push subscription error:', error);
+          });
+        } else {
+          console.log('Notification permission denied.');
+        }
       });
+    }).catch(function(error) {
+      console.error('Service Worker registration failed:', error);
+    });
   }
+  
   
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);

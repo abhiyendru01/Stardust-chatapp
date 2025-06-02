@@ -62,10 +62,8 @@ const Sidebar = () => {
     }
   };
 
-  // Filter and show only friends in the sidebar (including online/offline)
   const friendsList = authUser?.friends || [];
 
-  // Filtered users list based on the search query and friends list
   const sortedAndFilteredUsers = users
     .filter((user) => friendsList.includes(user._id)) // Show only friends
     .map((user) => ({
@@ -85,9 +83,6 @@ const Sidebar = () => {
   return (
     <aside className="h-screen fixed w-full lg:w-72 border-r border-base-300 bg-base-100 flex flex-col backdrop-blur-md">
       <div className="hidden lg:block"></div>
-
-      {/* Friend Request Icon Button in Top-Right Corner */}
-      
 
       {/* Search Bar */}
       <div className="border-b-2 rounded-b-3xl border-primary/70 w-full p-5 h-40 bg-primary/20 backdrop-blur-md">

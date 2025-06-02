@@ -71,34 +71,40 @@ const MessageInput = () => {
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
-const handleSendMessage = async (e) => {
-  e.preventDefault();
-  if (!text.trim() && !imagePreview && !audioBlob) return;
-
-  let audioUrl = null;
-  if (audioBlob) {
-    audioUrl = await sendAudioToServer(audioBlob); // Ensure we get a valid Cloudinary URL
-    if (!audioUrl) {
-      toast.error("Audio upload failed! Please try again.");
-      return;
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!text.trim() && !imagePreview && !audioBlob) return;
+  
+    let audioUrl = null;
+    if (audioBlob) {
+      audioUrl = await sendAudioToServer(audioBlob); // Ensure we get a valid Cloudinary URL
+      if (!audioUrl) {
+        toast.error("Audio upload failed! Please try again.");
+        return;
+      }
+    }
+  
+    try {
+      // Send the message using the sendMessage function and wait for a response
+      await sendMessage({
+        text: text.trim(),
+        image: imagePreview,
+        audio: audioUrl, // Send Cloudinary URL instead of blob
+      });
+  
+      // After the message is successfully sent, reset the UI states
+      setText(""); // Clear text input
+      setImagePreview(null); // Remove image preview
+      setAudioBlob(null); // Remove audio blob
+      if (fileInputRef.current) fileInputRef.current.value = ""; // Reset file input
+  
+      // Ensure the message is added once to the chat UI state (no duplication)
+      // This is managed by the sendMessage function, so we don't need to manually add it here
+    } catch (error) {
+      console.error("❌ Failed to send message:", error);
     }
   }
-
-  try {
-    await sendMessage({
-      text: text.trim(),
-      image: imagePreview,
-      audio: audioUrl, // Send Cloudinary URL instead of blob
-    });
-
-    setText("");
-    setImagePreview(null);
-    setAudioBlob(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  } catch (error) {
-    console.error("❌ Failed to send message:", error);
-  }
-}
+  
 
   // Animate waveform
   useEffect(() => {

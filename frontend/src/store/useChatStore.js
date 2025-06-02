@@ -69,18 +69,11 @@ sendMessage: async (messageData) => {
   try {
     console.log("Sending Message Data:", messageData);
 
-    const tempMessage = {
-      ...messageData,
-      senderId: useAuthStore.getState().authUser._id,
-      createdAt: new Date().toISOString(),
-    };
-
-    // ✅ Add message to the state before API call
-    set({ messages: [...messages, tempMessage] });
-
+    // Make the API call to send the message
     const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
     console.log("Message Sent Response:", res.data);
 
+    // Add the actual message response to the state
     set({ messages: [...messages, res.data] });
 
     let updatedUsers = users.map((user) =>
@@ -89,17 +82,20 @@ sendMessage: async (messageData) => {
         : user
     );
 
+    // Sort users by last message time
     updatedUsers.sort((a, b) => {
       const timeA = a.lastMessagedAt ? new Date(a.lastMessagedAt).getTime() : 0;
       const timeB = b.lastMessagedAt ? new Date(b.lastMessagedAt).getTime() : 0;
       return timeB - timeA;
     });
 
+    // Update users state
     set({ users: updatedUsers });
   } catch (error) {
     toast.error(error.response?.data?.message || "Error sending message");
   }
 },
+
 
 
 

@@ -147,10 +147,12 @@ subscribeToMessages: () => {
       await axiosInstance.post("/auth/accept-request", { senderId });
       toast.success("Friend request accepted!");
       get().getFriends(); // Refresh friends list
+      get().getUsers(); // Refresh users list to reflect the updated friend list
     } catch (error) {
       toast.error(error.response?.data?.message || "Error accepting friend request");
     }
   },
+  
   
   rejectFriendRequest: async (senderId) => {
     try {

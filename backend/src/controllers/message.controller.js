@@ -199,3 +199,27 @@ export const sendMessage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const deleteMessage = async (req, res) => {
+  const { messageId } = req.params;
+
+  try {
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Check if the current user is the sender or recipient
+    if (message.senderId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "You cannot delete this message" });
+    }
+
+    // Proceed with deleting the message
+    await Message.findByIdAndDelete(messageId);
+
+    return res.status(200).json({ message: "Message deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting message:", error);
+    return res.status(500).json({ message: "Failed to delete message" });
+  }
+};

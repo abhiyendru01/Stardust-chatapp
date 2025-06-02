@@ -18,3 +18,21 @@
   border-radius: 15px;
   border: 2px solid rgba(255, 255, 255, 0.8);
 }
+
+.chat-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  width: 100%;
+  padding: 10px 0px;
+}
+
+.chat-content {
+  margin-top: 60px; /* Adjust this to the height of your chat header */
+  padding-bottom: 60px; /* Ensure there's enough space for the input field */
+  overflow-y: auto;
+  flex-grow: 1;
+  height: calc(100vh - 60px); /* Ensure the chat content takes up remaining space */
+}

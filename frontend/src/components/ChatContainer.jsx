@@ -127,9 +127,13 @@ const ChatContainer = () => {
   
 
   return (
-    <div className="flex-1 flex flex-col h-full max-h-screen">
-      <ChatHeader />
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[calc(100vh-10rem)]">
+   <div className="flex-1 flex flex-col h-full">
+   <div className="chat-header">
+     <ChatHeader />
+   </div>
+   <div className="chat-content">
+     <div className="flex-1 overflow-y-auto p-4 space-y-4">
+ 
         {messages.length > 0 ? (
           messages.map((message) => (
             <div
@@ -197,6 +201,7 @@ const ChatContainer = () => {
       </div>
       <MessageInput />
     </div>
+  </div>
   );
 };
 

@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
-import { Users } from "lucide-react";
+import { Users } from "lucide-react"; // You can use the Users icon for the friend request button
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { Camera, Mic } from "lucide-react";
+import { Link } from "react-router-dom"; // Import Link for navigation
 import axios from "axios"; 
 import { toast } from "react-hot-toast"; 
 
 const Sidebar = () => {
   const { getUsers, users, selectedUser, setSelectedUser } = useChatStore();
   const { onlineUsers, authUser } = useAuthStore(); 
-  
+
   const [searchQuery, setSearchQuery] = useState(""); 
   const [searchResults, setSearchResults] = useState([]);
   
@@ -19,13 +20,12 @@ const Sidebar = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      getUsers(); 
+      getUsers(); // Refresh the user list every 5 seconds
     }, 5000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(interval); // Clean up interval on component unmount
   }, []);
 
-  
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
     const date = new Date(timestamp);
@@ -52,7 +52,6 @@ const Sidebar = () => {
       toast.error("Error searching for users");
     }
   };
-  
 
   const sendFriendRequest = async (userId) => {
     try {
@@ -63,7 +62,12 @@ const Sidebar = () => {
     }
   };
 
+  // Filter and show only friends in the sidebar (including online/offline)
+  const friendsList = authUser?.friends || [];
+
+  // Filtered users list based on the search query and friends list
   const sortedAndFilteredUsers = users
+    .filter((user) => friendsList.includes(user._id)) // Show only friends
     .map((user) => ({
       ...user,
       lastMessagedAt: user.lastMessagedAt || null,
@@ -74,14 +78,16 @@ const Sidebar = () => {
       return timeB - timeA;
     })
     .filter((user) => {
-      const matchesOnlineStatus = onlineUsers.includes(user._id);
       const matchesSearchQuery = user.fullName.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesOnlineStatus && matchesSearchQuery;
+      return matchesSearchQuery;
     });
 
   return (
     <aside className="h-screen fixed w-full lg:w-72 border-r border-base-300 bg-base-100 flex flex-col backdrop-blur-md">
       <div className="hidden lg:block"></div>
+
+      {/* Friend Request Icon Button in Top-Right Corner */}
+      
 
       {/* Search Bar */}
       <div className="border-b-2 rounded-b-3xl border-primary/70 w-full p-5 h-40 bg-primary/20 backdrop-blur-md">
@@ -100,6 +106,11 @@ const Sidebar = () => {
             />
           </label>
         </div>
+        <Link to="/friend-requests">
+        <button className="absolute top-5 right-5 bg-primary/30 p-3 rounded-full hover:bg-primary/50">
+          <Users size={24} className="text-base-content" />
+        </button>
+      </Link>
       </div>
 
       {/* Display Search Results */}
@@ -123,7 +134,6 @@ const Sidebar = () => {
 
                   <div className="flex-grow text-left truncate">
                     <div className="font-semibold">{user.fullName}</div>
-                    
                   </div>
 
                   {/* Add Friend Button */}
@@ -144,7 +154,7 @@ const Sidebar = () => {
         )}
       </div>
 
-      {/* Users List */}
+      {/* Friends List (Only Friends) */}
       <div className="overflow-y-auto w-full py-3 px-3 flex-grow space-y-1">
         {sortedAndFilteredUsers.map((user) => (
           <button

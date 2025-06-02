@@ -3,6 +3,7 @@
 import express from "express";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import {
+  getReceivedRequests,
   sendFriendRequest,
   acceptFriendRequest,
   rejectFriendRequest,
@@ -13,6 +14,7 @@ import {
 
 const router = express.Router();
 
+router.get("/received-requests", protectRoute, getReceivedRequests);
 router.post("/send-request", protectRoute, sendFriendRequest);
 router.post("/accept-request", protectRoute, acceptFriendRequest);
 router.post("/reject-request", protectRoute, rejectFriendRequest);

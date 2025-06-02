@@ -7,6 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
 import CallUI from "./components/CallUI";
+import FriendRequests from "./pages/FriendRequests";
 import AIChatPage from "./pages/Ai-Chat"; // Import your AI Chat Page
 import RecentCalls from "./pages/RecentCalls";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
@@ -126,6 +127,7 @@ const App = () => {
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
           <Route path="/settings" element={<SettingsPage /> }/>
           <Route path="/calls" element={<RecentCalls />} />
+          <Route path="/friend-requests" element={ <FriendRequests />} />
           <Route path="/profile" element={ <ProfilePage />}/>
         <Route
             path="/ai"

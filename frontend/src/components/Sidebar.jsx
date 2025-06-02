@@ -92,7 +92,7 @@ const Sidebar = () => {
       {/* Search Bar */}
       <div className="border-b-2 rounded-b-3xl border-primary/70 w-full p-5 h-40 bg-primary/20 backdrop-blur-md">
         <div className="flex items-center gap-2">
-          <h1 className="mt-6 text-2xl font-bold text-base-content">Search Users</h1>
+          <h1 className="mt-6 text-2xl font-bold text-base-content">Chats</h1>
           <Users className="mt-6 text-base-content justify-end" />
         </div>
         <div className="w-full p-3 lg:px-3 lg:py-2">
@@ -114,55 +114,16 @@ const Sidebar = () => {
       </div>
 
       {/* Display Search Results */}
-      <div className="w-full py-3 px-3 flex-grow space-y-1">
-        {searchQuery.length > 0 && (
-          <div className="overflow-y-auto w-full py-3 px-3 space-y-1 bg-primary/20 backdrop-blur-md rounded-lg">
-            {searchResults.length > 0 ? (
-              searchResults.map((user) => (
-                <button
-                  key={user._id}
-                  onClick={() => setSelectedUser(user)}
-                  className="w-full p-6 flex items-center gap-3 bg-primary/10 border-primary/10 hover:bg-primary/10 hover:border-primary/40 backdrop-blur-sm rounded-3xl border-2 transition-colors"
-                >
-                  <div className="relative mx-auto lg:mx-0">
-                    <img
-                      src={user.profilePic || "/avatar.png"}
-                      alt={user.fullName}
-                      className="size-12 object-cover rounded-full"
-                    />
-                  </div>
-
-                  <div className="flex-grow text-left truncate">
-                    <div className="font-semibold">{user.fullName}</div>
-                  </div>
-
-                  {/* Add Friend Button */}
-                  {!authUser.friends.includes(user._id) && (
-                    <button
-                      onClick={() => sendFriendRequest(user._id)}
-                      className="ml-4 bg-secondary/50  text-primary-content p-2 rounded-md hover:bg-primary/80 transition-colors"
-                    >
-                      Add
-                    </button>
-                  )}
-                </button>
-              ))
-            ) : (
-              <div className="text-center text-base-content/70 justify-center bg-base-100 py-4">No users found</div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Friends List (Only Friends) */}
-      <div className="overflow-y-auto w-full py-3 px-3 flex-grow space-y-1">
-        {sortedAndFilteredUsers.map((user) => (
+      <div className="relative w-full py-3 px-3 flex-grow space-y-1">
+  {/* Search Results Overlay */}
+  {searchQuery.length > 0 && (
+    <div className="absolute top-0 left-0 right-0 bottom-0 z-10 overflow-y-auto w-full py-3 px-3 space-y-1 bg-primary/20 backdrop-blur-md rounded-lg">
+      {searchResults.length > 0 ? (
+        searchResults.map((user) => (
           <button
             key={user._id}
             onClick={() => setSelectedUser(user)}
-            className={`w-full p-6 flex items-center gap-3 bg-primary/10 border-primary/10 hover:bg-primary/10 hover:border-primary/40 backdrop-blur-sm rounded-3xl border-2 transition-colors ${
-              selectedUser?._id === user._id ? "bg-primary/10 ring-1 ring-base-300" : ""
-            }`}
+            className="w-full p-6 flex items-center gap-3 bg-primary/10 border-primary/10 hover:bg-primary/10 hover:border-primary/40 backdrop-blur-sm rounded-3xl border-2 transition-colors"
           >
             <div className="relative mx-auto lg:mx-0">
               <img
@@ -170,40 +131,82 @@ const Sidebar = () => {
                 alt={user.fullName}
                 className="size-12 object-cover rounded-full"
               />
-              {onlineUsers.includes(user._id) && (
-                <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-zinc-900" />
-              )}
             </div>
 
             <div className="flex-grow text-left truncate">
-              <div className={`font-semibold ${user.unreadCount > 0 ? "font-bold" : ""}`}>
-                {user.fullName}
-              </div>
-
-              <div className={`text-sm flex items-center gap-1 ${user.unreadCount > 0 ? "font-extrabold text-base-content/90" : "text-zinc-400"}`}>
-                {user.lastMessage ? (
-                  user.lastMessage.includes("📷 Image") ? (
-                    <>
-                      <Camera size={14} className="text-green-500" /> <span>Image</span>
-                    </>
-                  ) : user.lastMessage.includes("🎵 Voice Note") ? (
-                    <>
-                      <Mic size={14} className="text-green-500" /> <span>Voice Note</span>
-                    </>
-                  ) : (
-                    user.lastMessage
-                  )
-                ) : "No messages yet"}
-              </div>
+              <div className="font-semibold">{user.fullName}</div>
             </div>
 
-            <div className="text-xs text-gray-400">
-              {user.lastMessageTime ? formatTime(user.lastMessageTime) : ""}
-              {user.unreadCount > 0 && (
-                <span className="ml-2 text-md text-base-content font-bold">({user.unreadCount})</span>
-              )}
-            </div>
+            {/* Add Friend Button */}
+            {!authUser.friends.includes(user._id) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering parent onClick
+                  sendFriendRequest(user._id);
+                }}
+                className="ml-4 bg-secondary/50 text-primary-content p-2 rounded-md hover:bg-primary/80 transition-colors"
+              >
+                Add
+              </button>
+            )}
           </button>
+        ))
+      ) : (
+        <div className="text-center text-base-content/70 justify-center bg-base-100 py-4">No users found</div>
+      )}
+    </div>
+  )}
+
+  {/* Friends List (only shown when no search query) */}
+  {searchQuery.length === 0 &&
+    sortedAndFilteredUsers.map((user) => (
+      <button
+        key={user._id}
+        onClick={() => setSelectedUser(user)}
+        className={`w-full p-6 flex items-center gap-3 bg-primary/10 border-primary/10 hover:bg-primary/10 hover:border-primary/40 backdrop-blur-sm rounded-3xl border-2 transition-colors ${
+          selectedUser?._id === user._id ? "bg-primary/10 ring-1 ring-base-300" : ""
+        }`}
+      >
+        <div className="relative mx-auto lg:mx-0">
+          <img
+            src={user.profilePic || "/avatar.png"}
+            alt={user.fullName}
+            className="size-12 object-cover rounded-full"
+          />
+          {onlineUsers.includes(user._id) && (
+            <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-zinc-900" />
+          )}
+        </div>
+
+        <div className="flex-grow text-left truncate">
+          <div className={`font-semibold ${user.unreadCount > 0 ? "font-bold" : ""}`}>
+            {user.fullName}
+          </div>
+
+          <div className={`text-sm flex items-center gap-1 ${user.unreadCount > 0 ? "font-extrabold text-base-content/90" : "text-zinc-400"}`}>
+            {user.lastMessage ? (
+              user.lastMessage.includes("📷 Image") ? (
+                <>
+                  <Camera size={14} className="text-green-500" /> <span>Image</span>
+                </>
+              ) : user.lastMessage.includes("🎵 Voice Note") ? (
+                <>
+                  <Mic size={14} className="text-green-500" /> <span>Voice Note</span>
+                </>
+              ) : (
+                user.lastMessage
+              )
+            ) : "No messages yet"}
+          </div>
+        </div>
+
+        <div className="text-xs text-gray-400">
+          {user.lastMessageTime ? formatTime(user.lastMessageTime) : ""}
+          {user.unreadCount > 0 && (
+            <span className="ml-2 text-md text-base-content font-bold">({user.unreadCount})</span>
+          )}
+        </div>
+      </button>
         ))}
         {sortedAndFilteredUsers.length === 0 && <div className="text-center text-base-content/70 justify-center bg-base-100 py-4"></div>}
       </div>

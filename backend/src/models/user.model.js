@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    pushNotificationSubscription: {
+      type: Object,
+      default: null,
+    },    
     friends: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

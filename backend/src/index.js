@@ -9,7 +9,6 @@ import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import friendRoutes from "./routes/friend.route.js";
 import callRoutes from "./routes/call.route.js";
-import notificationRoutes from './routes/notification.route'; 
 import pushNotificationsRoutes from "./routes/pushNotifications.route.js";
 import { app, server } from "./lib/socket.js";  
 
@@ -70,7 +69,6 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/friends", friendRoutes);
-app.use('/api/notifications', notificationRoutes);
 app.use("/api/push", pushNotificationsRoutes);
 app.use("/api/calls", callRoutes);
 

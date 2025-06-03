@@ -16,22 +16,20 @@ admin.initializeApp({
   }),
 });
 
-const sendPushNotification = (token, message) => {
-  const messagePayload = {
+export const sendPushNotification = async (fcmToken, message) => {
+  const payload = {
     notification: {
-      title: "New Message",
-      body: message,
+      title: message.senderName,
+      body: message.text,
+      icon: message.senderProfile, 
     },
-    token: token,
+    token: fcmToken,
   };
 
-  admin.messaging().send(messagePayload)
-    .then((response) => {
-      console.log("Successfully sent message:", response);
-    })
-    .catch((error) => {
-      console.log("Error sending message:", error);
-    });
+  try {
+    const response = await admin.messaging().send(payload);
+    console.log('✅ Push notification sent:', response);
+  } catch (error) {
+    console.error('❌ Error sending push notification:', error);
+  }
 };
-
-export { sendPushNotification };

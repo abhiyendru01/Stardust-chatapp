@@ -21,7 +21,19 @@ const Navbar = () => {
             </Link>
           </div>
 
+
           <div className="flex items-center gap-2">
+            <Link
+              to={"/friend-requests"}
+              className={`
+              btn btn-sm gap-2 transition-colors
+              
+              `}
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span className="hidden sm:inline">Requests</span>
+            </Link>
+
             <Link
               to={"/settings"}
               className={`
@@ -47,6 +59,7 @@ const Navbar = () => {
             )}
           </div>
         </div>
+        
       </div>
     </header>
   );

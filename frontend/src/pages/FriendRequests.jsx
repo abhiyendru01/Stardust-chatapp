@@ -62,7 +62,7 @@ const FriendRequests = () => {
 
   return (
     <div className="flex flex-col h-screen bg-base-100 p-4 relative">
-      <div className="mb-6 text-center">
+      <div className="mb-6 text-center sticky top-0 z-10 bg-base-100">
         <h1 className="text-2xl font-bold bg-base-200 p-4 rounded-xl shadow text-base-content">
           Friend Requests
         </h1>
@@ -80,7 +80,6 @@ const FriendRequests = () => {
                 />
                 <div>
                   <p className="font-semibold">{request.fullName}</p>
-                  
                 </div>
               </div>
 
@@ -105,12 +104,10 @@ const FriendRequests = () => {
         )}
       </div>
 
-      {/* Back Button at the bottom */}
       <button
         onClick={handleBack}
-        className="w-full p-4 border-t t-3 border-primary/70 bg-primary/20 text-primary-content/70  rounded-t-2xl mx-auto mt-4 fixed bottom-0 left-1/2 transform -translate-x-1/2 hover:bg-base-primary transition-colors"
+        className="w-full p-4 border-t t-3 border-primary/70 bg-primary/20 text-primary-content/70 rounded-t-2xl mx-auto mt-4 fixed bottom-0 left-1/2 transform -translate-x-1/2 hover:bg-base-primary transition-colors"
       >
-        
         Back
       </button>
     </div>

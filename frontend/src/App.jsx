@@ -134,12 +134,10 @@ const App = () => {
       });
   }
 
-  // Handle theme change
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
-  // Loading and redirecting based on authentication status
   if (isCheckingAuth && !authUser)
     return (
       <div className="flex items-center justify-center h-screen">

@@ -4,9 +4,10 @@ import { useState, useRef, useEffect } from "react"
 import { Image, Send, Mic, X, Pause } from "lucide-react"
 import toast from "react-hot-toast"
 import { useChatStore } from "../store/useChatStore"
+
 import { cn } from "../lib/utils"
 
-// ✅ Use relative path as frontend & backend share the same domain
+ // ✅ Use relative path as frontend & backend share the same domain
 
 const MessageInput = () => {
   const [text, setText] = useState("")
@@ -103,6 +104,7 @@ const MessageInput = () => {
       console.error("❌ Failed to send message:", error);
     }
   }
+  
 
   // Animate waveform
   useEffect(() => {
@@ -192,7 +194,7 @@ const MessageInput = () => {
   }
 
   return (
-    <div id="message-input-wrapper" className="p-4 w-full border-t-2 rounded-t-3xl border-primary/40 bg-base-200/80 backdrop-blur-md shadow-lg transition-all duration-300 pb-5 ">
+    <div className="p-4 w-full border-t-2 rounded-t-3xl border-primary/40 bg-base-200/80 backdrop-blur-md shadow-lg transition-all duration-300 pb-5 ">
       {imagePreview && (
         <div className="mb-3 flex items-center gap-2 animate-in slide-in-from-bottom duration-300">
           <div className="relative">
@@ -308,3 +310,4 @@ const MessageInput = () => {
 }
 
 export default MessageInput
+
